@@ -1,0 +1,69 @@
+CREATE TABLE IF NOT EXISTS user_transaction (
+    id                  TEXT    NOT NULL PRIMARY KEY,
+    amount              REAL    NOT NULL,
+    flow_type           TEXT    NOT NULL,
+    transaction_type_id TEXT    NOT NULL REFERENCES transaction_type(id),
+    source_type_id      TEXT    REFERENCES transaction_type(id),
+    account_id          TEXT    NOT NULL REFERENCES account(id),
+    note                TEXT,
+    created_at          INTEGER NOT NULL
+);
+
+-- flow_type: INCOME | EXPENSE
+
+selectAll:
+SELECT t.id, t.amount, t.flow_type, t.note, t.created_at,
+       t.account_id, t.transaction_type_id, t.source_type_id,
+       tt.name AS type_name, tt.category AS type_category,
+       a.name  AS account_name,
+       st.name AS source_type_name
+FROM user_transaction t
+JOIN transaction_type tt ON t.transaction_type_id = tt.id
+JOIN account a            ON t.account_id = a.id
+LEFT JOIN transaction_type st ON t.source_type_id = st.id
+ORDER BY t.created_at DESC;
+
+selectByAccount:
+SELECT t.id, t.amount, t.flow_type, t.note, t.created_at,
+       t.account_id, t.transaction_type_id, t.source_type_id,
+       tt.name AS type_name, tt.category AS type_category,
+       a.name  AS account_name,
+       st.name AS source_type_name
+FROM user_transaction t
+JOIN transaction_type tt ON t.transaction_type_id = tt.id
+JOIN account a            ON t.account_id = a.id
+LEFT JOIN transaction_type st ON t.source_type_id = st.id
+WHERE t.account_id = ?
+ORDER BY t.created_at DESC;
+
+insert:
+INSERT INTO user_transaction(id, amount, flow_type, transaction_type_id, source_type_id, account_id, note, created_at)
+VALUES(?, ?, ?, ?, ?, ?, ?, ?);
+
+delete:
+DELETE FROM user_transaction WHERE id = ?;
+
+totalByCategoryInRange:
+SELECT tt.id AS type_id, tt.name AS type_name, tt.category,
+       COALESCE(SUM(t.amount), 0.0) AS total
+FROM transaction_type tt
+LEFT JOIN user_transaction t
+       ON t.transaction_type_id = tt.id
+      AND t.flow_type = 'EXPENSE'
+      AND t.created_at >= :from AND t.created_at <= :to
+WHERE tt.category IN ('EXPENSE', 'RECURRING_EXPENSE')
+GROUP BY tt.id ORDER BY total DESC;
+
+incomeVsExpenseByDay:
+SELECT flow_type,
+       COALESCE(SUM(amount), 0.0)         AS total,
+       (created_at / 86400000) * 86400000 AS day_bucket
+FROM user_transaction
+WHERE created_at >= :from AND created_at <= :to
+GROUP BY flow_type, day_bucket
+ORDER BY day_bucket ASC;
+
+netBalance:
+SELECT COALESCE(
+    SUM(CASE WHEN flow_type = 'INCOME' THEN amount ELSE -amount END), 0.0
+) AS net FROM user_transaction;

@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS goal_contribution (
+    id              TEXT    NOT NULL PRIMARY KEY,
+    goal_id         TEXT    NOT NULL REFERENCES goal(id),
+    from_account_id TEXT    NOT NULL REFERENCES account(id),
+    amount          REAL    NOT NULL,
+    note            TEXT,
+    created_at      INTEGER NOT NULL
+);
+
+selectByGoal:
+SELECT gc.id, gc.amount, gc.note, gc.created_at,
+       a.name AS from_account_name
+FROM goal_contribution gc
+JOIN account a ON gc.from_account_id = a.id
+WHERE gc.goal_id = ?
+ORDER BY gc.created_at DESC;
+
+insert:
+INSERT INTO goal_contribution(id, goal_id, from_account_id, amount, note, created_at)
+VALUES(?, ?, ?, ?, ?, ?);

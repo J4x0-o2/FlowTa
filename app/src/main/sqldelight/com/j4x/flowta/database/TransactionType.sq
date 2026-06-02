@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS transaction_type (
+    id         TEXT    NOT NULL PRIMARY KEY,
+    name       TEXT    NOT NULL,
+    category   TEXT    NOT NULL,
+    created_at INTEGER NOT NULL
+);
+
+-- category: INCOME | EXPENSE | RECURRING_EXPENSE | TRANSFER | INCOME_SOURCE
+
+selectAll:
+SELECT * FROM transaction_type ORDER BY name ASC;
+
+selectByCategory:
+SELECT * FROM transaction_type WHERE category = ? ORDER BY name ASC;
+
+insert:
+INSERT INTO transaction_type(id, name, category, created_at) VALUES(?, ?, ?, ?);
+
+delete:
+DELETE FROM transaction_type WHERE id = ?;

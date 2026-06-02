@@ -1,0 +1,30 @@
+CREATE TABLE IF NOT EXISTS account (
+    id               TEXT    NOT NULL PRIMARY KEY,
+    name             TEXT    NOT NULL,
+    type             TEXT    NOT NULL,
+    balance          REAL    NOT NULL DEFAULT 0.0,
+    meta_amount      REAL,
+    meta_periodicity TEXT,
+    created_at       INTEGER NOT NULL
+);
+
+-- type: CASH | BANK | DIGITAL_WALLET | SAVINGS | OTHER
+
+selectAll:
+SELECT * FROM account ORDER BY created_at ASC;
+
+selectById:
+SELECT * FROM account WHERE id = ?;
+
+totalBalance:
+SELECT COALESCE(SUM(balance), 0.0) FROM account;
+
+insert:
+INSERT INTO account(id, name, type, balance, meta_amount, meta_periodicity, created_at)
+VALUES(?, ?, ?, ?, ?, ?, ?);
+
+updateBalance:
+UPDATE account SET balance = ? WHERE id = ?;
+
+delete:
+DELETE FROM account WHERE id = ?;

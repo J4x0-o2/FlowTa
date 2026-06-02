@@ -1,0 +1,3 @@
+<resources>
+    <style name="Theme.FlowTa" parent="android:Theme.Material.NoActionBar" />
+</resources>

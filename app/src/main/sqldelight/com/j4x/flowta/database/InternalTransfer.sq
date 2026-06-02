@@ -1,0 +1,28 @@
+CREATE TABLE IF NOT EXISTS internal_transfer (
+    id               TEXT    NOT NULL PRIMARY KEY,
+    from_account_id  TEXT    NOT NULL REFERENCES account(id),
+    to_account_id    TEXT    NOT NULL REFERENCES account(id),
+    transfer_type_id TEXT    REFERENCES transaction_type(id),
+    amount           REAL    NOT NULL,
+    note             TEXT,
+    created_at       INTEGER NOT NULL
+);
+
+selectAll:
+SELECT it.id, it.amount, it.note, it.created_at,
+       it.transfer_type_id,
+       fa.id AS from_id, fa.name AS from_name,
+       ta.id AS to_id,   ta.name AS to_name
+FROM internal_transfer it
+JOIN account fa ON it.from_account_id = fa.id
+JOIN account ta ON it.to_account_id   = ta.id
+ORDER BY it.created_at DESC;
+
+insert:
+INSERT INTO internal_transfer(id, from_account_id, to_account_id, transfer_type_id, amount, note, created_at)
+VALUES(?, ?, ?, ?, ?, ?, ?);
+
+totalAmountInRange:
+SELECT COALESCE(SUM(amount), 0.0) AS total
+FROM internal_transfer
+WHERE created_at >= :from AND created_at <= :to;
