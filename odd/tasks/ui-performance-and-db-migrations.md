@@ -35,7 +35,7 @@ profile generation (needs a macrobenchmark module + device; follow-up).
   `core` with unit tests (RED first); replace per-call `SimpleDateFormat`/`DecimalFormat`
   creation in TransactionBubble, TransactionDetailBottomSheet, TransactionScreen, AccountCard,
   AccountDetailScreen, ProfileScreen, MetricsScreen.
-- [ ] T2 Animation tuning: NavGraph transitions ~200 ms with FastOutSlowInEasing; bubble press
+- [x] T2 Animation tuning: NavGraph transitions ~200 ms with FastOutSlowInEasing; bubble press
   spring no-bounce/medium stiffness read in `graphicsLayer {}`; simplify balance header
   animation (~200 ms, no stacked AnimatedContent+color).
 - [ ] T3 Composition cost: `remember` for selectedTransaction lookup and metrics chart
@@ -60,6 +60,7 @@ profile generation (needs a macrobenchmark module + device; follow-up).
   `perf/ui-animations-and-db-migrations` (from `main` @ `fd9fcaf`).
 - RDD: on (global). Review per work-unit commit via `gentle-ai review assess`.
 - T1 (commit: see git log `perf: cache formatters`): RED `./gradlew testDebugUnitTest` -> 6 of 6 FormattersTest failed with kotlin.NotImplementedError (stub); GREEN after implementation: `./gradlew testDebugUnitTest` BUILD SUCCESSFUL, FormattersTest 6 tests 0 failures; `./gradlew testDebugUnitTest assembleDebug` BUILD SUCCESSFUL. Decision: DecimalFormat via ThreadLocal; java.time formatters cached, zone applied per call.
+- T2: NavGraph tween 320->200 ms FastOutSlowInEasing (slide + fade kept); bubble press spring NoBouncy/StiffnessMedium via graphicsLayer reading State in lambda; balance header = single tween(200) color animation (AnimatedContent removed, number changes instantly). Checks: `./gradlew testDebugUnitTest assembleDebug` BUILD SUCCESSFUL; `assembleDebug --rerun-tasks` compileDebugKotlin BUILD SUCCESSFUL. Manual feel check on device pending.
 
 ## Next step
-T2.
+T3.

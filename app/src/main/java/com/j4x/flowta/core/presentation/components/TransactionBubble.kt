@@ -31,7 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.j4x.flowta.core.domain.model.CurrencyCode
@@ -98,9 +98,9 @@ fun TransactionBubble(
 
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    val pressScale by animateFloatAsState(
+    val pressScale = animateFloatAsState(
         targetValue   = if (isPressed) 0.96f else 1f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium),
         label         = "bubblePressScale"
     )
 
@@ -110,7 +110,12 @@ fun TransactionBubble(
     ) {
         Box(
             modifier = Modifier
-                .scale(pressScale)
+                .graphicsLayer {
+                    // Read inside the layer lambda so the press animation skips recomposition.
+                    val s = pressScale.value
+                    scaleX = s
+                    scaleY = s
+                }
                 .widthIn(max = 260.dp)
                 .clip(shape)
                 .background(bubbleColor)

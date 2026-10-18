@@ -1,5 +1,6 @@
 package com.j4x.flowta.core.presentation.navigation
 
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -22,31 +23,32 @@ import com.j4x.flowta.feature.transactions.presentation.TransactionScreen
 fun NavGraph() {
     val navController = rememberNavController()
 
-    // Duración común para que todas las transiciones se sientan consistentes y suaves.
-    val durationMs = 320
+    // Duración común corta + easing de desaceleración: transiciones ágiles y consistentes.
+    val durationMs = 200
+    val easing     = FastOutSlowInEasing
 
     NavHost(
         navController  = navController,
         startDestination = Screen.Transactions.route,
         // Entrada al navegar hacia adelante: la pantalla nueva entra deslizando desde la derecha.
         enterTransition = {
-            slideInHorizontally(animationSpec = tween(durationMs)) { fullWidth -> fullWidth / 4 } +
-                fadeIn(animationSpec = tween(durationMs))
+            slideInHorizontally(animationSpec = tween(durationMs, easing = easing)) { fullWidth -> fullWidth / 4 } +
+                fadeIn(animationSpec = tween(durationMs, easing = easing))
         },
         // La pantalla anterior se va deslizando un poco hacia la izquierda y se desvanece.
         exitTransition = {
-            slideOutHorizontally(animationSpec = tween(durationMs)) { fullWidth -> -fullWidth / 4 } +
-                fadeOut(animationSpec = tween(durationMs))
+            slideOutHorizontally(animationSpec = tween(durationMs, easing = easing)) { fullWidth -> -fullWidth / 4 } +
+                fadeOut(animationSpec = tween(durationMs, easing = easing))
         },
         // Al volver (back): la pantalla anterior reaparece desde la izquierda.
         popEnterTransition = {
-            slideInHorizontally(animationSpec = tween(durationMs)) { fullWidth -> -fullWidth / 4 } +
-                fadeIn(animationSpec = tween(durationMs))
+            slideInHorizontally(animationSpec = tween(durationMs, easing = easing)) { fullWidth -> -fullWidth / 4 } +
+                fadeIn(animationSpec = tween(durationMs, easing = easing))
         },
         // La pantalla actual sale deslizando hacia la derecha al hacer back.
         popExitTransition = {
-            slideOutHorizontally(animationSpec = tween(durationMs)) { fullWidth -> fullWidth / 4 } +
-                fadeOut(animationSpec = tween(durationMs))
+            slideOutHorizontally(animationSpec = tween(durationMs, easing = easing)) { fullWidth -> fullWidth / 4 } +
+                fadeOut(animationSpec = tween(durationMs, easing = easing))
         }
     ) {
         composable(Screen.Transactions.route) {

@@ -1,13 +1,7 @@
 package com.j4x.flowta.feature.transactions.presentation
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -100,29 +94,14 @@ fun TransactionScreen(
                                 state.balance < 0 -> ExpenseRed
                                 else              -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                             },
-                            animationSpec = tween(400),
+                            animationSpec = tween(200),
                             label         = "balanceColor"
                         )
-                        AnimatedContent(
-                            targetState    = state.balance,
-                            transitionSpec = {
-                                // El número entra desde arriba si sube, desde abajo si baja.
-                                if (targetState >= initialState) {
-                                    (slideInVertically(tween(360)) { -it } + fadeIn(tween(360))) togetherWith
-                                        (slideOutVertically(tween(360)) { it } + fadeOut(tween(360)))
-                                } else {
-                                    (slideInVertically(tween(360)) { it } + fadeIn(tween(360))) togetherWith
-                                        (slideOutVertically(tween(360)) { -it } + fadeOut(tween(360)))
-                                }
-                            },
-                            label = "balanceValue"
-                        ) { balance ->
-                            Text(
-                                text  = "Balance: ${balance.toBalanceString(currencySymbol, currencyCode)}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = balanceColor
-                            )
-                        }
+                        Text(
+                            text  = "Balance: ${state.balance.toBalanceString(currencySymbol, currencyCode)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = balanceColor
+                        )
                     }
                 },
                 actions = {
