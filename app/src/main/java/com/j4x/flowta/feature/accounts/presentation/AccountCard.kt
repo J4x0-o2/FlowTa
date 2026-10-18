@@ -29,12 +29,10 @@ import androidx.compose.ui.unit.dp
 import com.j4x.flowta.core.domain.model.CurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencySymbol
-import java.text.DecimalFormat
-import java.text.DecimalFormatSymbols
-import java.util.Locale
 import com.j4x.flowta.core.presentation.theme.Indigo500
 import com.j4x.flowta.feature.accounts.domain.model.Account
 import com.j4x.flowta.feature.accounts.domain.model.AccountType
+import com.j4x.flowta.core.presentation.format.Formatters
 
 @Composable
 fun AccountCard(
@@ -140,9 +138,6 @@ fun AccountCard(
 }
 
 private fun Double.formatAmount(symbol: String, code: CurrencyCode): String {
-    val num = when (code) {
-        CurrencyCode.COP -> DecimalFormat("#,##0", DecimalFormatSymbols(Locale.US)).format(toLong())
-        else             -> "%.2f".format(this)
-    }
+    val num = Formatters.amount(this, code)
     return "$symbol$num"
 }

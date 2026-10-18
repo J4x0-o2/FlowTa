@@ -43,11 +43,7 @@ import com.j4x.flowta.core.presentation.theme.IncomeBubble
 import com.j4x.flowta.core.presentation.theme.IncomeGreen
 import com.j4x.flowta.core.presentation.theme.Indigo200
 import com.j4x.flowta.core.presentation.theme.TransferBubble
-import java.text.DecimalFormat
-import java.text.DecimalFormatSymbols
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import com.j4x.flowta.core.presentation.format.Formatters
 
 @Composable
 fun TransactionBubble(
@@ -153,13 +149,6 @@ fun TransactionBubble(
     }
 }
 
-private fun Double.toAmountString(code: CurrencyCode): String = when (code) {
-    CurrencyCode.COP -> DecimalFormat("#,##0", DecimalFormatSymbols(Locale.US)).format(toLong())
-    else             -> "%.2f".format(this)
-}
+private fun Double.toAmountString(code: CurrencyCode): String = Formatters.amount(this, code)
 
-private fun Long.toTransactionDate(): String {
-    val dayMonth = SimpleDateFormat("d MMM", Locale("es")).format(Date(this))
-    val time     = SimpleDateFormat("h:mm a", Locale.ENGLISH).format(Date(this))
-    return "$dayMonth · $time"
-}
+private fun Long.toTransactionDate(): String = Formatters.bubbleDate(this)

@@ -52,9 +52,6 @@ import androidx.navigation.NavController
 import com.j4x.flowta.core.domain.model.CurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencySymbol
-import java.text.DecimalFormat
-import java.text.DecimalFormatSymbols
-import java.util.Locale
 import com.j4x.flowta.core.presentation.navigation.Screen
 import com.j4x.flowta.core.presentation.theme.ExpenseRed
 import com.j4x.flowta.core.presentation.theme.Indigo500
@@ -70,6 +67,7 @@ import com.j4x.flowta.feature.types.presentation.TypeChip
 import com.j4x.flowta.feature.types.presentation.TypesBottomSheet
 import com.j4x.flowta.feature.types.presentation.TypesIntent
 import com.j4x.flowta.feature.types.presentation.TypesViewModel
+import com.j4x.flowta.core.presentation.format.Formatters
 
 private enum class ActiveSheet { SETTINGS, NEW_ACCOUNT, INCOME_TYPES, EXPENSE_TYPES, TRANSFER_TYPES }
 
@@ -421,9 +419,6 @@ private fun CapitalTotalSection(total: Double, accountCount: Int) {
 
 private fun Double.formatCapital(symbol: String, code: CurrencyCode): String {
     val abs = kotlin.math.abs(this)
-    val num = when (code) {
-        CurrencyCode.COP -> DecimalFormat("#,##0", DecimalFormatSymbols(Locale.US)).format(abs.toLong())
-        else             -> "%.2f".format(abs)
-    }
+    val num = Formatters.amount(abs, code)
     return if (this < 0) "-$symbol$num" else "$symbol$num"
 }

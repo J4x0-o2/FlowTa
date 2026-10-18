@@ -37,15 +37,11 @@ import androidx.compose.ui.unit.dp
 import com.j4x.flowta.core.domain.model.CurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencySymbol
-import java.text.DecimalFormat
-import java.text.DecimalFormatSymbols
 import com.j4x.flowta.core.presentation.theme.ExpenseRed
 import com.j4x.flowta.core.presentation.theme.Indigo500
 import com.j4x.flowta.core.presentation.theme.IncomeGreen
 import com.j4x.flowta.feature.transactions.domain.model.Transaction
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import com.j4x.flowta.core.presentation.format.Formatters
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -195,13 +191,6 @@ private fun DetailRow(icon: ImageVector, label: String, value: String) {
     }
 }
 
-private fun Double.toDisplayAmount(code: CurrencyCode): String = when (code) {
-    CurrencyCode.COP -> DecimalFormat("#,##0", DecimalFormatSymbols(java.util.Locale.US)).format(toLong())
-    else             -> "%.2f".format(this)
-}
+private fun Double.toDisplayAmount(code: CurrencyCode): String = Formatters.amount(this, code)
 
-private fun Long.toDetailDate(): String {
-    val dayPart  = SimpleDateFormat("EEEE d 'de' MMMM, yyyy", Locale("es")).format(Date(this))
-    val timePart = SimpleDateFormat("h:mm a", Locale.ENGLISH).format(Date(this))
-    return "$dayPart · $timePart"
-}
+private fun Long.toDetailDate(): String = Formatters.detailDate(this)

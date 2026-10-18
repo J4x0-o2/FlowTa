@@ -49,14 +49,12 @@ import com.j4x.flowta.core.presentation.theme.Indigo500
 import com.j4x.flowta.core.domain.model.CurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencySymbol
-import java.text.DecimalFormat
-import java.text.DecimalFormatSymbols
-import java.util.Locale
 import com.j4x.flowta.core.presentation.theme.IncomeGreen
 import com.j4x.flowta.feature.metrics.domain.model.CategoryExpense
 import com.j4x.flowta.feature.metrics.domain.model.DailyFlow
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.graphics.drawscope.Fill
+import com.j4x.flowta.core.presentation.format.Formatters
 
 private val chartPalette = listOf(
     Color(0xFFE74C3C), Color(0xFF3498DB), Color(0xFF2ECC71),
@@ -401,9 +399,6 @@ private fun LegendDot(color: Color, label: String) {
 private fun Double.toDisplayAmount(symbol: String, code: CurrencyCode): String {
     val sign = if (this < 0) "-" else ""
     val abs  = kotlin.math.abs(this)
-    val num  = when (code) {
-        CurrencyCode.COP -> DecimalFormat("#,##0", DecimalFormatSymbols(Locale.US)).format(abs.toLong())
-        else             -> "%.2f".format(abs)
-    }
+    val num = Formatters.amount(abs, code)
     return "$sign$symbol$num"
 }
