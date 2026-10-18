@@ -49,7 +49,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.j4x.flowta.core.domain.model.CurrencyCode
+import com.j4x.flowta.core.presentation.LocalCurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencySymbol
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
+import java.util.Locale
 import com.j4x.flowta.core.presentation.navigation.Screen
 import com.j4x.flowta.core.presentation.theme.ExpenseRed
 import com.j4x.flowta.core.presentation.theme.Indigo500
@@ -379,6 +384,7 @@ private fun CategorySection(
 @Composable
 private fun CapitalTotalSection(total: Double, accountCount: Int) {
     val symbol = LocalCurrencySymbol.current
+    val code   = LocalCurrencyCode.current
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -396,7 +402,7 @@ private fun CapitalTotalSection(total: Double, accountCount: Int) {
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
         )
         Text(
-            text = if (total == total.toLong().toDouble()) "$symbol${total.toLong()}" else "$symbol%.2f".format(total),
+            text = total.formatCapital(symbol, code),
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold,
             color = when {
@@ -411,4 +417,13 @@ private fun CapitalTotalSection(total: Double, accountCount: Int) {
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
         )
     }
+}
+
+private fun Double.formatCapital(symbol: String, code: CurrencyCode): String {
+    val abs = kotlin.math.abs(this)
+    val num = when (code) {
+        CurrencyCode.COP -> DecimalFormat("#,##0", DecimalFormatSymbols(Locale.US)).format(abs.toLong())
+        else             -> "%.2f".format(abs)
+    }
+    return if (this < 0) "-$symbol$num" else "$symbol$num"
 }

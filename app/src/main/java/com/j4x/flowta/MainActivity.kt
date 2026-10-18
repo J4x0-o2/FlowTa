@@ -10,6 +10,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.CompositionLocalProvider
 import com.j4x.flowta.core.domain.model.CurrencyCode
+import com.j4x.flowta.core.presentation.LocalCurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencySymbol
 import com.j4x.flowta.core.presentation.navigation.NavGraph
 import com.j4x.flowta.core.presentation.theme.FlowTaTheme
@@ -32,10 +33,14 @@ class MainActivity : ComponentActivity() {
                 AppTheme.LIGHT  -> false
                 AppTheme.SYSTEM -> isSystemInDarkTheme()
             }
-            val currencySymbol = CurrencyCode.entries
-                .find { it.displayCode == state.preferences.currencyCode }?.symbol ?: "$"
+            val currencyCode   = CurrencyCode.entries
+                .find { it.displayCode == state.preferences.currencyCode } ?: CurrencyCode.USD
+            val currencySymbol = currencyCode.symbol
             FlowTaTheme(darkTheme = isDark) {
-                CompositionLocalProvider(LocalCurrencySymbol provides currencySymbol) {
+                CompositionLocalProvider(
+                    LocalCurrencySymbol provides currencySymbol,
+                    LocalCurrencyCode   provides currencyCode
+                ) {
                     NavGraph()
                 }
             }

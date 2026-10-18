@@ -8,10 +8,11 @@ val Indigo700   = Color(0xFF303F9F)
 val Indigo200   = Color(0xFF9FA8DA)
 
 // Semantic
-val IncomeGreen  = Color(0xFF2ECC71)
-val ExpenseRed   = Color(0xFFE74C3C)
-val IncomeBubble = Color(0xFF1B5E20)
+val IncomeGreen   = Color(0xFF2ECC71)
+val ExpenseRed    = Color(0xFFE74C3C)
+val IncomeBubble  = Color(0xFF1B5E20)
 val ExpenseBubble = Color(0xFFB71C1C)
+val TransferBubble = Color(0xFF1A237E)
 
 // Surfaces — dark
 val DarkBackground = Color(0xFF121212)

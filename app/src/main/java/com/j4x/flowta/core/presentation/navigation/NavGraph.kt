@@ -1,5 +1,10 @@
 package com.j4x.flowta.core.presentation.navigation
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -17,9 +22,32 @@ import com.j4x.flowta.feature.transactions.presentation.TransactionScreen
 fun NavGraph() {
     val navController = rememberNavController()
 
+    // Duración común para que todas las transiciones se sientan consistentes y suaves.
+    val durationMs = 320
+
     NavHost(
         navController  = navController,
-        startDestination = Screen.Transactions.route
+        startDestination = Screen.Transactions.route,
+        // Entrada al navegar hacia adelante: la pantalla nueva entra deslizando desde la derecha.
+        enterTransition = {
+            slideInHorizontally(animationSpec = tween(durationMs)) { fullWidth -> fullWidth / 4 } +
+                fadeIn(animationSpec = tween(durationMs))
+        },
+        // La pantalla anterior se va deslizando un poco hacia la izquierda y se desvanece.
+        exitTransition = {
+            slideOutHorizontally(animationSpec = tween(durationMs)) { fullWidth -> -fullWidth / 4 } +
+                fadeOut(animationSpec = tween(durationMs))
+        },
+        // Al volver (back): la pantalla anterior reaparece desde la izquierda.
+        popEnterTransition = {
+            slideInHorizontally(animationSpec = tween(durationMs)) { fullWidth -> -fullWidth / 4 } +
+                fadeIn(animationSpec = tween(durationMs))
+        },
+        // La pantalla actual sale deslizando hacia la derecha al hacer back.
+        popExitTransition = {
+            slideOutHorizontally(animationSpec = tween(durationMs)) { fullWidth -> fullWidth / 4 } +
+                fadeOut(animationSpec = tween(durationMs))
+        }
     ) {
         composable(Screen.Transactions.route) {
             TransactionScreen(navController = navController)

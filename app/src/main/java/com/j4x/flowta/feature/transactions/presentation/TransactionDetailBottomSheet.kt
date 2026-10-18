@@ -34,7 +34,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.j4x.flowta.core.domain.model.CurrencyCode
+import com.j4x.flowta.core.presentation.LocalCurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencySymbol
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
 import com.j4x.flowta.core.presentation.theme.ExpenseRed
 import com.j4x.flowta.core.presentation.theme.Indigo500
 import com.j4x.flowta.core.presentation.theme.IncomeGreen
@@ -50,6 +54,7 @@ fun TransactionDetailBottomSheet(
     onDismiss: () -> Unit
 ) {
     val currencySymbol = LocalCurrencySymbol.current
+    val currencyCode   = LocalCurrencyCode.current
     val isIncome  = transaction.flowType == "INCOME"
     val flowColor = if (isIncome) IncomeGreen else ExpenseRed
     val flowIcon  = if (isIncome) Icons.AutoMirrored.Filled.CallReceived else Icons.AutoMirrored.Filled.CallMade
@@ -95,7 +100,7 @@ fun TransactionDetailBottomSheet(
 
             // Monto
             Text(
-                text       = "${if (isIncome) "+" else "-"}$currencySymbol${transaction.amount.toDisplayAmount()}",
+                text       = "${if (isIncome) "+" else "-"}$currencySymbol${transaction.amount.toDisplayAmount(currencyCode)}",
                 style      = MaterialTheme.typography.headlineLarge,
                 color      = flowColor,
                 fontWeight = FontWeight.Bold
@@ -190,8 +195,10 @@ private fun DetailRow(icon: ImageVector, label: String, value: String) {
     }
 }
 
-private fun Double.toDisplayAmount(): String =
-    if (this == this.toLong().toDouble()) "${this.toLong()}" else "%.2f".format(this)
+private fun Double.toDisplayAmount(code: CurrencyCode): String = when (code) {
+    CurrencyCode.COP -> DecimalFormat("#,##0", DecimalFormatSymbols(java.util.Locale.US)).format(toLong())
+    else             -> "%.2f".format(this)
+}
 
 private fun Long.toDetailDate(): String {
     val dayPart  = SimpleDateFormat("EEEE d 'de' MMMM, yyyy", Locale("es")).format(Date(this))

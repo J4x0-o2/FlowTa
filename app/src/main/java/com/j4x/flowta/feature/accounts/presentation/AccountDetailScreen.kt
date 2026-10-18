@@ -33,7 +33,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.j4x.flowta.core.presentation.components.TransactionBubble
+import com.j4x.flowta.core.domain.model.CurrencyCode
+import com.j4x.flowta.core.presentation.LocalCurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencySymbol
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
+import java.util.Locale
 import com.j4x.flowta.core.presentation.theme.ExpenseRed
 import com.j4x.flowta.core.presentation.theme.Indigo500
 import com.j4x.flowta.core.presentation.theme.IncomeGreen
@@ -49,6 +54,7 @@ fun AccountDetailScreen(
     val state          by viewModel.state.collectAsStateWithLifecycle()
     val account         = state.account
     val currencySymbol  = LocalCurrencySymbol.current
+    val currencyCode    = LocalCurrencyCode.current
 
     val selectedTx = state.selectedTransactionId
         ?.let { id -> state.transactions.find { it.id == id } }
@@ -66,7 +72,7 @@ fun AccountDetailScreen(
                         if (account != null) {
                             val balance = account.balance
                             Text(
-                                text  = balance.toBalanceString(currencySymbol),
+                                text  = balance.toBalanceString(currencySymbol, currencyCode),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = when {
                                     balance > 0 -> IncomeGreen
@@ -122,6 +128,7 @@ fun AccountDetailScreen(
                         flowType  = transaction.flowType,
                         typeName  = transaction.typeName,
                         createdAt = transaction.createdAt,
+                        modifier  = Modifier.animateItem(),
                         onClick        = { viewModel.selectTransaction(transaction.id) }
                     )
                 }
@@ -145,6 +152,7 @@ private fun SavingsProgressCard(
 ) {
     val progress       = (balance / meta).coerceIn(0.0, 1.0).toFloat()
     val currencySymbol = LocalCurrencySymbol.current
+    val currencyCode   = LocalCurrencyCode.current
 
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -165,7 +173,7 @@ private fun SavingsProgressCard(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
                 Text(
-                    meta.toBalanceString(currencySymbol),
+                    meta.toBalanceString(currencySymbol, currencyCode),
                     style      = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -196,8 +204,11 @@ private fun SavingsProgressCard(
     }
 }
 
-private fun Double.toBalanceString(symbol: String): String {
+private fun Double.toBalanceString(symbol: String, code: CurrencyCode): String {
     val abs = kotlin.math.abs(this)
-    val formatted = if (abs == abs.toLong().toDouble()) "${abs.toLong()}" else "%.2f".format(abs)
-    return if (this < 0) "-$symbol$formatted" else "$symbol$formatted"
+    val num = when (code) {
+        CurrencyCode.COP -> DecimalFormat("#,##0", DecimalFormatSymbols(Locale.US)).format(abs.toLong())
+        else             -> "%.2f".format(abs)
+    }
+    return if (this < 0) "-$symbol$num" else "$symbol$num"
 }

@@ -46,7 +46,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.j4x.flowta.core.presentation.theme.ExpenseRed
 import com.j4x.flowta.core.presentation.theme.Indigo500
+import com.j4x.flowta.core.domain.model.CurrencyCode
+import com.j4x.flowta.core.presentation.LocalCurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencySymbol
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
+import java.util.Locale
 import com.j4x.flowta.core.presentation.theme.IncomeGreen
 import com.j4x.flowta.feature.metrics.domain.model.CategoryExpense
 import com.j4x.flowta.feature.metrics.domain.model.DailyFlow
@@ -196,6 +201,7 @@ private fun SummaryCard(
     modifier: Modifier = Modifier
 ) {
     val symbol = LocalCurrencySymbol.current
+    val code   = LocalCurrencyCode.current
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(12.dp),
@@ -217,7 +223,7 @@ private fun SummaryCard(
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
             )
             Text(
-                text       = amount.toDisplayAmount(symbol),
+                text       = amount.toDisplayAmount(symbol, code),
                 style      = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color      = color
@@ -392,9 +398,12 @@ private fun LegendDot(color: Color, label: String) {
     }
 }
 
-private fun Double.toDisplayAmount(symbol: String): String {
+private fun Double.toDisplayAmount(symbol: String, code: CurrencyCode): String {
     val sign = if (this < 0) "-" else ""
     val abs  = kotlin.math.abs(this)
-    val num  = if (abs == abs.toLong().toDouble()) "${abs.toLong()}" else "%.2f".format(abs)
+    val num  = when (code) {
+        CurrencyCode.COP -> DecimalFormat("#,##0", DecimalFormatSymbols(Locale.US)).format(abs.toLong())
+        else             -> "%.2f".format(abs)
+    }
     return "$sign$symbol$num"
 }

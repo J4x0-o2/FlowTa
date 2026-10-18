@@ -1,5 +1,13 @@
 package com.j4x.flowta.feature.transactions.presentation
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,7 +38,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.j4x.flowta.core.domain.model.CurrencyCode
+import com.j4x.flowta.core.presentation.LocalCurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencySymbol
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
+import java.util.Locale
 import com.j4x.flowta.core.presentation.components.BottomInputBar
 import com.j4x.flowta.core.presentation.components.TransactionBubble
 import com.j4x.flowta.core.presentation.navigation.Screen
@@ -47,6 +60,7 @@ fun TransactionScreen(
     val state           by viewModel.state.collectAsStateWithLifecycle()
     val addState        by addViewModel.state.collectAsStateWithLifecycle()
     val currencySymbol   = LocalCurrencySymbol.current
+    val currencyCode     = LocalCurrencyCode.current
     val snackbarHostState = remember { SnackbarHostState() }
     var showAddSheet by remember { mutableStateOf(false) }
 
@@ -82,15 +96,35 @@ fun TransactionScreen(
                             style      = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold
                         )
-                        Text(
-                            text  = "Balance: ${state.balance.toBalanceString(currencySymbol)}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = when {
+                        val balanceColor by animateColorAsState(
+                            targetValue = when {
                                 state.balance > 0 -> IncomeGreen
                                 state.balance < 0 -> ExpenseRed
                                 else              -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                            }
+                            },
+                            animationSpec = tween(400),
+                            label         = "balanceColor"
                         )
+                        AnimatedContent(
+                            targetState    = state.balance,
+                            transitionSpec = {
+                                // El número entra desde arriba si sube, desde abajo si baja.
+                                if (targetState >= initialState) {
+                                    (slideInVertically(tween(360)) { -it } + fadeIn(tween(360))) togetherWith
+                                        (slideOutVertically(tween(360)) { it } + fadeOut(tween(360)))
+                                } else {
+                                    (slideInVertically(tween(360)) { it } + fadeIn(tween(360))) togetherWith
+                                        (slideOutVertically(tween(360)) { -it } + fadeOut(tween(360)))
+                                }
+                            },
+                            label = "balanceValue"
+                        ) { balance ->
+                            Text(
+                                text  = "Balance: ${balance.toBalanceString(currencySymbol, currencyCode)}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = balanceColor
+                            )
+                        }
                     }
                 },
                 actions = {
@@ -107,7 +141,7 @@ fun TransactionScreen(
             BottomInputBar(onAddTransaction = { viewModel.onIntent(TransactionIntent.OpenAddForm) })
         }
     ) { padding ->
-        if (state.transactions.isEmpty()) {
+        if (state.feed.isEmpty()) {
             Box(
                 modifier         = Modifier.fillMaxSize().padding(padding),
                 contentAlignment = Alignment.Center
@@ -122,14 +156,25 @@ fun TransactionScreen(
                 modifier      = Modifier.fillMaxSize().padding(padding),
                 reverseLayout = true
             ) {
-                items(state.transactions, key = { it.id }) { transaction ->
-                    TransactionBubble(
-                        amount    = transaction.amount,
-                        flowType  = transaction.flowType,
-                        typeName  = transaction.typeName,
-                        createdAt = transaction.createdAt,
-                        onClick   = { viewModel.onIntent(TransactionIntent.SelectTransaction(transaction.id)) }
-                    )
+                items(state.feed, key = { it.id }) { item ->
+                    when (item) {
+                        is FeedItem.Tx -> TransactionBubble(
+                            amount    = item.transaction.amount,
+                            flowType  = item.transaction.flowType,
+                            typeName  = item.transaction.typeName,
+                            createdAt = item.transaction.createdAt,
+                            modifier  = Modifier.animateItem(),
+                            onClick   = { viewModel.onIntent(TransactionIntent.SelectTransaction(item.transaction.id)) }
+                        )
+                        is FeedItem.Xfer -> TransactionBubble(
+                            amount    = item.transfer.amount,
+                            flowType  = "TRANSFER",
+                            typeName  = "${item.transfer.fromAccountName} → ${item.transfer.toAccountName}",
+                            createdAt = item.transfer.createdAt,
+                            modifier  = Modifier.animateItem(),
+                            onClick   = {}
+                        )
+                    }
                 }
             }
         }
@@ -147,7 +192,7 @@ fun TransactionScreen(
     }
 
     val selectedTransaction = state.selectedTransactionId
-        ?.let { id -> state.transactions.find { it.id == id } }
+        ?.let { id -> state.feed.filterIsInstance<FeedItem.Tx>().find { it.transaction.id == id }?.transaction }
 
     if (selectedTransaction != null) {
         TransactionDetailBottomSheet(
@@ -157,8 +202,11 @@ fun TransactionScreen(
     }
 }
 
-private fun Double.toBalanceString(symbol: String): String {
+private fun Double.toBalanceString(symbol: String, code: CurrencyCode): String {
     val abs = kotlin.math.abs(this)
-    val formatted = if (abs == abs.toLong().toDouble()) "${abs.toLong()}" else "%.2f".format(abs)
-    return if (this < 0) "-$symbol$formatted" else "$symbol$formatted"
+    val num = when (code) {
+        CurrencyCode.COP -> DecimalFormat("#,##0", DecimalFormatSymbols(Locale.US)).format(abs.toLong())
+        else             -> "%.2f".format(abs)
+    }
+    return if (this < 0) "-$symbol$num" else "$symbol$num"
 }
