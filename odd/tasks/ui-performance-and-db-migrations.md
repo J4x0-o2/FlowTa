@@ -41,7 +41,7 @@ profile generation (needs a macrobenchmark module + device; follow-up).
 - [x] T3 Composition cost: `remember` for selectedTransaction lookup and metrics chart
   calculations (extract pure calc functions + tests where logic moves); `contentType` in
   LazyColumns; `collectAsStateWithLifecycle` in MainActivity/Settings/Profile.
-- [ ] T4 Release tooling: `isShrinkResources = true`, `androidx.profileinstaller`, `staging`
+- [x] T4 Release tooling: `isShrinkResources = true`, `androidx.profileinstaller`, `staging`
   build type (initWith release, debug signing, local only) with SQLDelight workarounds.
 - [ ] T5 Migrations: freeze schema v1 (`.db` snapshot under `src/main/sqldelight/databases`),
   enable `verifyMigrations`, add migration verification test, update CLAUDE.md
@@ -62,6 +62,7 @@ profile generation (needs a macrobenchmark module + device; follow-up).
 - T1 (commit: see git log `perf: cache formatters`): RED `./gradlew testDebugUnitTest` -> 6 of 6 FormattersTest failed with kotlin.NotImplementedError (stub); GREEN after implementation: `./gradlew testDebugUnitTest` BUILD SUCCESSFUL, FormattersTest 6 tests 0 failures; `./gradlew testDebugUnitTest assembleDebug` BUILD SUCCESSFUL. Decision: DecimalFormat via ThreadLocal; java.time formatters cached, zone applied per call.
 - T2: NavGraph tween 320->200 ms FastOutSlowInEasing (slide + fade kept); bubble press spring NoBouncy/StiffnessMedium via graphicsLayer reading State in lambda; balance header = single tween(200) color animation (AnimatedContent removed, number changes instantly). Checks: `./gradlew testDebugUnitTest assembleDebug` BUILD SUCCESSFUL; `assembleDebug --rerun-tasks` compileDebugKotlin BUILD SUCCESSFUL. Manual feel check on device pending.
 - T3: RED `./gradlew testDebugUnitTest` -> 5 of 6 MetricsCalculationsTest failed with AssertionError (stub returned empty); GREEN after implementing computeBarChartData/computeDonutData. remember() for Metrics charts and selectedTransaction lookup; contentType on TransactionScreen, AccountDetailScreen, ProfileScreen lists; collectAsStateWithLifecycle in MainActivity, SettingsScreen, ProfileScreen; explicit lifecycle-runtime-compose in catalog (was already transitively available). Checks: `./gradlew testDebugUnitTest assembleDebug` BUILD SUCCESSFUL.
+- T4: isShrinkResources on release; profileinstaller 1.3.1 via catalog; `staging` build type (initWith release, debug signing, suffix .staging) with SQLDelight sourceSet + kspStagingKotlin workarounds. Checks: `./gradlew assembleStaging` BUILD SUCCESSFUL (minifyStagingWithR8, shrinkStagingRes ran; no missing_rules.txt, so no missing-class R8 warnings; app-staging.apk produced); `./gradlew testDebugUnitTest assembleDebug` BUILD SUCCESSFUL. Runtime check of the staging APK on a device pending.
 
 ## Next step
-T4.
+T5.

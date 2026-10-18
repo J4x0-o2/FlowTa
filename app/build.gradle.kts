@@ -23,7 +23,16 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+        // Release-like build for local performance checks: R8 + resource shrinking, debug signing,
+        // installs beside the debug build. Not for distribution.
+        create("staging") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+            applicationIdSuffix = ".staging"
         }
     }
 
@@ -43,6 +52,9 @@ android {
         getByName("release") {
             java.srcDirs("${layout.buildDirectory.get()}/generated/sqldelight/code/FlowTaDatabase/release")
         }
+        getByName("staging") {
+            java.srcDirs("${layout.buildDirectory.get()}/generated/sqldelight/code/FlowTaDatabase/staging")
+        }
     }
 }
 
@@ -52,6 +64,9 @@ afterEvaluate {
     }
     tasks.named("kspReleaseKotlin") {
         dependsOn("generateReleaseFlowTaDatabaseInterface")
+    }
+    tasks.named("kspStagingKotlin") {
+        dependsOn("generateStagingFlowTaDatabaseInterface")
     }
 }
 
@@ -68,6 +83,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.profileinstaller)
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
