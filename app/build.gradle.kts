@@ -74,6 +74,8 @@ sqldelight {
     databases {
         create("FlowTaDatabase") {
             packageName.set("com.j4x.flowta.database")
+            schemaOutputDirectory.set(file("src/main/sqldelight/databases"))
+            verifyMigrations.set(true)
         }
     }
 }

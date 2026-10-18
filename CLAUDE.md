@@ -67,7 +67,18 @@ transaction_type:  id, name, category, created_at
 Queries métricas en `Transaction.sq`: `totalByCategoryInRange`, `incomeVsExpenseByDay`, `netBalance`
 Query transferencias en `InternalTransfer.sq`: `totalAmountInRange`
 
-No hay migraciones `.sqm` — DB se recrea en cada install.
+## Migraciones
+
+Versión actual del schema: **1** (baseline de los dispositivos existentes). Snapshot congelado en `app/src/main/sqldelight/databases/1.db`; `verifyMigrations` está activo.
+
+Para cambiar el schema:
+1. Editar el `.sq` y crear `app/src/main/sqldelight/migrations/N.sqm` (N = versión actual) con los `ALTER TABLE` necesarios.
+2. Regenerar el snapshot `N+1.db` con `./gradlew generateDebugFlowTaDatabaseSchema`.
+3. Correr `./gradlew verifySqlDelightMigration` (migraciones + snapshots deben coincidir con los `CREATE`).
+4. Extender `MigrationSnapshotTest` para migrar desde el snapshot anterior (`Schema.migrate`).
+5. Nunca editar un `.db` ya commiteado.
+
+Nota (Windows): los workers de Gradle 9 no heredan variables de entorno, así que `sqlite-jdbc` intenta extraer su DLL en `C:\Windows` y las tareas `generate*Schema`/`verify*Migration` fallan con `AccessDeniedException`. `MigrationSnapshotTest` cubre la misma verificación en la JVM de tests.
 
 ---
 
