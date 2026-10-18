@@ -133,7 +133,7 @@ fun TransactionScreen(
                 modifier      = Modifier.fillMaxSize().padding(padding),
                 reverseLayout = true
             ) {
-                items(state.feed, key = { it.id }) { item ->
+                items(state.feed, key = { it.id }, contentType = { it::class }) { item ->
                     when (item) {
                         is FeedItem.Tx -> TransactionBubble(
                             amount    = item.transaction.amount,
@@ -168,8 +168,10 @@ fun TransactionScreen(
         )
     }
 
-    val selectedTransaction = state.selectedTransactionId
-        ?.let { id -> state.feed.filterIsInstance<FeedItem.Tx>().find { it.transaction.id == id }?.transaction }
+    val selectedTransaction = remember(state.selectedTransactionId, state.feed) {
+        state.selectedTransactionId
+            ?.let { id -> state.feed.filterIsInstance<FeedItem.Tx>().find { it.transaction.id == id }?.transaction }
+    }
 
     if (selectedTransaction != null) {
         TransactionDetailBottomSheet(

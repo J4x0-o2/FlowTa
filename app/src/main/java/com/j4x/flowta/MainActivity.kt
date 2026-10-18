@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.CompositionLocalProvider
 import com.j4x.flowta.core.domain.model.CurrencyCode
@@ -27,7 +27,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            val state by settingsViewModel.state.collectAsState()
+            val state by settingsViewModel.state.collectAsStateWithLifecycle()
             val isDark = when (state.preferences.theme) {
                 AppTheme.DARK   -> true
                 AppTheme.LIGHT  -> false

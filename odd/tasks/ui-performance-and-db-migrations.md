@@ -38,7 +38,7 @@ profile generation (needs a macrobenchmark module + device; follow-up).
 - [x] T2 Animation tuning: NavGraph transitions ~200 ms with FastOutSlowInEasing; bubble press
   spring no-bounce/medium stiffness read in `graphicsLayer {}`; simplify balance header
   animation (~200 ms, no stacked AnimatedContent+color).
-- [ ] T3 Composition cost: `remember` for selectedTransaction lookup and metrics chart
+- [x] T3 Composition cost: `remember` for selectedTransaction lookup and metrics chart
   calculations (extract pure calc functions + tests where logic moves); `contentType` in
   LazyColumns; `collectAsStateWithLifecycle` in MainActivity/Settings/Profile.
 - [ ] T4 Release tooling: `isShrinkResources = true`, `androidx.profileinstaller`, `staging`
@@ -61,6 +61,7 @@ profile generation (needs a macrobenchmark module + device; follow-up).
 - RDD: on (global). Review per work-unit commit via `gentle-ai review assess`.
 - T1 (commit: see git log `perf: cache formatters`): RED `./gradlew testDebugUnitTest` -> 6 of 6 FormattersTest failed with kotlin.NotImplementedError (stub); GREEN after implementation: `./gradlew testDebugUnitTest` BUILD SUCCESSFUL, FormattersTest 6 tests 0 failures; `./gradlew testDebugUnitTest assembleDebug` BUILD SUCCESSFUL. Decision: DecimalFormat via ThreadLocal; java.time formatters cached, zone applied per call.
 - T2: NavGraph tween 320->200 ms FastOutSlowInEasing (slide + fade kept); bubble press spring NoBouncy/StiffnessMedium via graphicsLayer reading State in lambda; balance header = single tween(200) color animation (AnimatedContent removed, number changes instantly). Checks: `./gradlew testDebugUnitTest assembleDebug` BUILD SUCCESSFUL; `assembleDebug --rerun-tasks` compileDebugKotlin BUILD SUCCESSFUL. Manual feel check on device pending.
+- T3: RED `./gradlew testDebugUnitTest` -> 5 of 6 MetricsCalculationsTest failed with AssertionError (stub returned empty); GREEN after implementing computeBarChartData/computeDonutData. remember() for Metrics charts and selectedTransaction lookup; contentType on TransactionScreen, AccountDetailScreen, ProfileScreen lists; collectAsStateWithLifecycle in MainActivity, SettingsScreen, ProfileScreen; explicit lifecycle-runtime-compose in catalog (was already transitively available). Checks: `./gradlew testDebugUnitTest assembleDebug` BUILD SUCCESSFUL.
 
 ## Next step
-T3.
+T4.

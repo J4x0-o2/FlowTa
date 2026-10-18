@@ -32,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -262,19 +263,18 @@ private fun IncomeExpenseBarChart(dailyFlows: List<DailyFlow>) {
         return
     }
 
-    val grouped   = dailyFlows.groupBy { it.dayBucket }
-    val days      = grouped.keys.sorted().takeLast(14)
-    val maxValue  = dailyFlows.maxOf { it.total }.coerceAtLeast(1.0).toFloat()
+    val chart    = remember(dailyFlows) { computeBarChartData(dailyFlows) }
+    val days     = chart.days
+    val maxValue = chart.maxValue
 
     Canvas(modifier = Modifier.fillMaxWidth().height(120.dp)) {
         val groupW  = size.width / days.size
         val barW    = (groupW * 0.32f).coerceAtLeast(4f)
         val gap     = 2f
 
-        days.forEachIndexed { i, dayBucket ->
-            val data    = grouped[dayBucket]
-            val income  = data?.find { it.flowType == "INCOME"  }?.total?.toFloat() ?: 0f
-            val expense = data?.find { it.flowType == "EXPENSE" }?.total?.toFloat() ?: 0f
+        days.forEachIndexed { i, day ->
+            val income  = day.income
+            val expense = day.expense
             val cx      = (i + 0.5f) * groupW
 
             if (income > 0) {
@@ -312,8 +312,9 @@ private fun IncomeExpenseBarChart(dailyFlows: List<DailyFlow>) {
 
 @Composable
 private fun ExpensesDonutChart(categories: List<CategoryExpense>) {
-    val nonZero = categories.filter { it.total > 0 }
-    val total   = nonZero.sumOf { it.total }
+    val donut   = remember(categories) { computeDonutData(categories) }
+    val nonZero = donut.slices
+    val total   = donut.total
 
     if (total == 0.0) {
         Box(

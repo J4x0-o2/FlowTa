@@ -120,7 +120,7 @@ fun AccountDetailScreen(
                     }
                 }
             } else {
-                items(state.transactions, key = { it.id }) { transaction ->
+                items(state.transactions, key = { it.id }, contentType = { "transaction" }) { transaction ->
                     TransactionBubble(
                         amount    = transaction.amount,
                         flowType  = transaction.flowType,
