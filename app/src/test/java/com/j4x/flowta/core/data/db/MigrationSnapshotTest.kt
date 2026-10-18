@@ -11,6 +11,7 @@ import org.junit.Test
 /**
  * JVM-side guard that mirrors SQLDelight's `verifyMigrations`: the committed snapshot
  * `src/main/sqldelight/databases/<version>.db` must match what `Schema.create` produces.
+ * The snapshot's version is its file name; the plugin leaves `PRAGMA user_version` at 0.
  *
  * Changing a `.sq` table without adding an `N.sqm` migration and regenerating the next
  * snapshot makes this test fail. Once migrations exist, extend it to open the previous
@@ -46,18 +47,5 @@ class MigrationSnapshotTest {
         val expected = readObjects("jdbc:sqlite:${fresh.path}")
         val actual = readObjects("jdbc:sqlite:${snapshot.path}")
         assertEquals(expected, actual)
-    }
-
-    @Test
-    fun committedSnapshot_userVersionMatchesSchemaVersion() {
-        val snapshot = File("src/main/sqldelight/databases/${FlowTaDatabase.Schema.version}.db")
-        DriverManager.getConnection("jdbc:sqlite:${snapshot.path}").use { conn ->
-            conn.createStatement().use { st ->
-                st.executeQuery("PRAGMA user_version").use { rs ->
-                    rs.next()
-                    assertEquals(FlowTaDatabase.Schema.version, rs.getLong(1))
-                }
-            }
-        }
     }
 }

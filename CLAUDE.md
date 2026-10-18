@@ -78,7 +78,7 @@ Para cambiar el schema:
 4. Extender `MigrationSnapshotTest` para migrar desde el snapshot anterior (`Schema.migrate`).
 5. Nunca editar un `.db` ya commiteado.
 
-Nota (Windows): los workers de Gradle 9 no heredan variables de entorno, así que `sqlite-jdbc` intenta extraer su DLL en `C:\Windows` y las tareas `generate*Schema`/`verify*Migration` fallan con `AccessDeniedException`. `MigrationSnapshotTest` cubre la misma verificación en la JVM de tests.
+Nota (Windows): los workers de Gradle 9 arrancan solo con `SystemRoot` en el entorno, así que `sqlite-jdbc` intentaría extraer su DLL en `C:\Windows` (`AccessDeniedException`). El módulo `tools/sqlite-worker-shim` (solo de build, no va en el APK) se agrega al classpath de las tareas de SQLDelight desde `app/build.gradle.kts` y redirige la extracción a `~/.gradle/sqlite-native`. No correr `generate*Schema` y `verify*Migration` en la misma invocación (el plugin no declara la dependencia entre ellas).
 
 ---
 

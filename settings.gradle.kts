@@ -24,4 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "FlowTa"
 include(":app")
- 
+include(":tools:sqlite-worker-shim")

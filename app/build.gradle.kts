@@ -1,3 +1,5 @@
+import app.cash.sqldelight.gradle.SqlDelightWorkerTask
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -68,6 +70,25 @@ afterEvaluate {
     tasks.named("kspStagingKotlin") {
         dependsOn("generateStagingFlowTaDatabaseInterface")
     }
+}
+
+// SQLDelight schema/migration workers run with an empty environment under Gradle 9, which breaks
+// sqlite-jdbc's native extraction on Windows. The shim (see tools/sqlite-worker-shim) fixes the
+// temp dir. The plugin finalizes `classpath` itself, so it is extended once the graph is ready.
+val sqliteWorkerShim: Configuration by configurations.creating {
+    isCanBeConsumed = false
+}
+
+dependencies {
+    sqliteWorkerShim(project(":tools:sqlite-worker-shim"))
+}
+
+tasks.withType<SqlDelightWorkerTask>().configureEach {
+    dependsOn(sqliteWorkerShim)
+}
+
+gradle.taskGraph.whenReady {
+    allTasks.filterIsInstance<SqlDelightWorkerTask>().forEach { it.classpath.from(sqliteWorkerShim) }
 }
 
 sqldelight {
