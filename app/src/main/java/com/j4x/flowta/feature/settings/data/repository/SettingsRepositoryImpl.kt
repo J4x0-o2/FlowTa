@@ -41,6 +41,10 @@ class SettingsRepositoryImpl @Inject constructor(
         context.dataStore.edit { it[currencyKey] = code }
     }
 
+    override suspend fun clear() {
+        context.dataStore.edit { it.clear() }
+    }
+
     override suspend fun setLanguage(language: String) {
         context.dataStore.edit { it[languageKey] = language }
     }

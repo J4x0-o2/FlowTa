@@ -246,7 +246,15 @@ fun ProfileScreen(navController: NavController) {
     }
 
     when (activeSheet) {
-        ActiveSheet.SETTINGS -> SettingsBottomSheet(onDismiss = { activeSheet = null })
+        ActiveSheet.SETTINGS -> SettingsBottomSheet(
+            onDismiss   = { activeSheet = null },
+            onDataReset = {
+                activeSheet = null
+                navController.navigate(Screen.Transactions.route) {
+                    popUpTo(0) { inclusive = true }
+                }
+            }
+        )
 
         ActiveSheet.NEW_ACCOUNT -> NewAccountBottomSheet(
             onDismiss = { activeSheet = null },

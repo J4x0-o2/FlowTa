@@ -38,7 +38,7 @@ delete/reset UI; `AccountIntent.DeleteAccount` exists but no screen dispatches i
 
 ## Tasks
 - [x] T1 Reset account: queries + repository + `ResetAccountUseCase` + dialog/menu; tests (SQLite driver).
-- [ ] T2 Reset everything: queries + `ResetAllDataUseCase` (DB + DataStore + WorkManager + reseed) + Settings UI; tests.
+- [x] T2 Reset everything: queries + `ResetAllDataUseCase` (DB + DataStore + WorkManager + reseed) + Settings UI; tests.
 - [ ] T3 Emulator check of both flows.
 
 ## Route per task
@@ -59,5 +59,15 @@ delete/reset UI; `AccountIntent.DeleteAccount` exists but no screen dispatches i
 - New queries only: `countByAccount`/`deleteByAccount` (transaction, transfer), `deleteByAccount` (contribution),
   `subtractAccountContributions` (goal); `deleteAll` added for T2. No schema change.
 
+### T2 (route: delegated direct writer)
+- RED: `ResetAllDataTest` (5) with `TODO()` stubs: 5/5 `NotImplementedError`; `SettingsViewModelResetTest` (5) with
+  intents ignored: 3 failed (gate assertion, failure-keeps-dialog, success-emits-effect), 2 trivially passing.
+- GREEN: both suites 5/5; full suite 80 tests, 0 failures. `./gradlew testDebugUnitTest assembleDebug`: BUILD SUCCESSFUL.
+- Design: `ResetAllDataUseCase` = `AppDataRepository.wipeAll()` (one transaction, children first, accounts last) ->
+  `SeedDefaultTypesUseCase` (extracted from `TypesViewModel.seedIfEmpty`, reused by it) -> `SettingsRepository.clear()`
+  (DataStore) -> `WorkCanceller.cancelAll()` (`WorkManager.cancelAllWork()`, Hilt-bound, context injected).
+  The BORRAR gate lives in `SettingsState.canConfirmResetAll`; success emits `SettingsEffect.DataReset` and the
+  screen navigates to Transactions with `popUpTo(0)`. Wipe failures keep the dialog open with an inline error.
+
 ## Next step
-T2.
+T3 (emulator check).

@@ -8,4 +8,6 @@ interface SettingsRepository {
     suspend fun setTheme(theme: String)
     suspend fun setCurrency(code: String)
     suspend fun setLanguage(language: String)
+    /** Removes every stored preference so theme, currency and language return to their defaults. */
+    suspend fun clear()
 }

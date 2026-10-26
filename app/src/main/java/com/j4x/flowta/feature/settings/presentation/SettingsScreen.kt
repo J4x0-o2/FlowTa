@@ -16,6 +16,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -39,11 +44,20 @@ import com.j4x.flowta.feature.settings.domain.model.AppTheme
 @Composable
 fun SettingsBottomSheet(
     onDismiss: () -> Unit,
+    onDataReset: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val prefs = state.preferences
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    LaunchedEffect(Unit) {
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                SettingsEffect.DataReset -> onDataReset()
+            }
+        }
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -177,6 +191,96 @@ fun SettingsBottomSheet(
                     }
                 }
             }
+
+            Spacer(Modifier.height(20.dp))
+
+            Text(
+                "DATOS",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            Surface(
+                onClick = { viewModel.onIntent(SettingsIntent.OpenResetAll) },
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.error.copy(alpha = 0.08f)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.DeleteForever,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Text(
+                        "Borrar todos los datos",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
         }
     }
+
+    if (state.showResetAll) {
+        ResetAllDialog(
+            confirmation = state.resetConfirmation,
+            canConfirm   = state.canConfirmResetAll,
+            isResetting  = state.isResetting,
+            error        = state.resetError,
+            onChange     = { viewModel.onIntent(SettingsIntent.ResetConfirmationChanged(it)) },
+            onConfirm    = { viewModel.onIntent(SettingsIntent.ConfirmResetAll) },
+            onDismiss    = { viewModel.onIntent(SettingsIntent.DismissResetAll) }
+        )
+    }
+}
+
+@Composable
+private fun ResetAllDialog(
+    confirmation: String,
+    canConfirm: Boolean,
+    isResetting: Boolean,
+    error: String?,
+    onChange: (String) -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("¿Borrar todos los datos?") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Esta acción no se puede deshacer. Se borrará todo y la app quedará como recién instalada:")
+                Text(
+                    "• Cuentas\n• Movimientos y transferencias\n• Metas y aportes\n" +
+                        "• Categorías personalizadas\n• Preferencias de tema y moneda",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                OutlinedTextField(
+                    value         = confirmation,
+                    onValueChange = onChange,
+                    label         = { Text("Escribe $RESET_CONFIRMATION_WORD para confirmar") },
+                    singleLine    = true,
+                    enabled       = !isResetting,
+                    isError       = error != null,
+                    supportingText = error?.let { { Text(it) } },
+                    modifier      = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = canConfirm) {
+                Text("Borrar todo", color = MaterialTheme.colorScheme.error.copy(alpha = if (canConfirm) 1f else 0.4f))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isResetting) { Text("Cancelar") }
+        }
+    )
 }

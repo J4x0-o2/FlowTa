@@ -12,7 +12,9 @@ import com.j4x.flowta.feature.metrics.data.repository.MetricsRepositoryImpl
 import com.j4x.flowta.feature.metrics.domain.repository.MetricsRepository
 import com.j4x.flowta.feature.profile.data.repository.ProfileRepositoryImpl
 import com.j4x.flowta.feature.profile.domain.repository.ProfileRepository
+import com.j4x.flowta.feature.settings.data.repository.AppDataRepositoryImpl
 import com.j4x.flowta.feature.settings.data.repository.SettingsRepositoryImpl
+import com.j4x.flowta.feature.settings.domain.repository.AppDataRepository
 import com.j4x.flowta.feature.settings.domain.repository.SettingsRepository
 import com.j4x.flowta.feature.transactions.data.repository.TransactionRepositoryImpl
 import com.j4x.flowta.feature.transactions.domain.repository.TransactionRepository
@@ -59,4 +61,7 @@ abstract class RepositoryModule {
 
     @Binds @Singleton
     abstract fun bindHistoryRepository(impl: HistoryRepositoryImpl): HistoryRepository
+
+    @Binds @Singleton
+    abstract fun bindAppDataRepository(impl: AppDataRepositoryImpl): AppDataRepository
 }
