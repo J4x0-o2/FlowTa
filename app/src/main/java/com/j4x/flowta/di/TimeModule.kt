@@ -1,6 +1,10 @@
 package com.j4x.flowta.di
 
+import android.content.Context
+import com.j4x.flowta.core.data.time.BroadcastTimeChangeSignal
+import com.j4x.flowta.core.domain.time.TimeChangeSignal
 import dagger.Module
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
@@ -20,4 +24,8 @@ object TimeModule {
         override fun withZone(zone: ZoneId): Clock = Clock.system(zone)
         override fun instant(): Instant = Instant.now()
     }
+
+    @Provides @Singleton
+    fun provideTimeChangeSignal(@ApplicationContext context: Context): TimeChangeSignal =
+        BroadcastTimeChangeSignal(context)
 }

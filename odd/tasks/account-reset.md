@@ -40,9 +40,10 @@ delete/reset UI; `AccountIntent.DeleteAccount` exists but no screen dispatches i
 - [x] T1 Reset account: queries + repository + `ResetAccountUseCase` + dialog/menu; tests (SQLite driver).
 - [x] T2 Reset everything: queries + `ResetAllDataUseCase` (DB + DataStore + WorkManager + reseed) + Settings UI; tests.
 - [x] T3 Emulator check of both flows.
+- [x] T4 Review follow-ups (R3 findings: starting-balance thousands, atomic seed, best-effort reset-all, order assertion, ticker zone change).
 
 ## Route per task
-- T1–T3: delegated direct (writer trigger: 2+ non-trivial files).
+- T1–T4: delegated direct (writer trigger: 2+ non-trivial files).
 
 ## Delivery
 - Branch `feat/account-reset`, based on `feat/history-weekly-monthly` (unmerged).
@@ -79,6 +80,40 @@ delete/reset UI; `AccountIntent.DeleteAccount` exists but no screen dispatches i
   Settings: theme back to system default, currency back to COP (was switched to USD before wiping).
 - `adb logcat -d`: no FATAL / AndroidRuntime entries for com.j4x.flowta.
 - Screenshots: scratchpad `reset-account-dialog.png`, `reset-account-after.png`, `reset-all-dialog.png`, `reset-all-after.png`.
+
+### T4 Review follow-ups (route: delegated direct writer; strict TDD, runner `./gradlew testDebugUnitTest`)
+- R3-starting-balance-thousands. The existing amount inputs (`NewTransactionBottomSheet`, `NewAccountBottomSheet`) use a Decimal
+  keyboard and a bare `toDoubleOrNull()` (only "." decimal, "5,000" is rejected, "5.000" silently becomes 5.0), so there was no
+  grouping-aware parser to reuse; the starting-balance field keeps the same keyboard but parses explicitly by currency
+  (`parseStartingBalance(text, CurrencyCode)`), never guessing:
+  - COP (no decimals): "." and "," are thousands separators only and must be well grouped. "5.000", "5,000" -> 5000, "1.000.000" -> 1000000;
+    "5,5", "12.50", "1.000,50", "1.00.000", "1000.000" -> rejected.
+  - USD/EUR: one separator followed by 1-2 digits is the decimal ("12.5", "12,34"); both marks -> the last is the decimal
+    ("1,234.56", "1.234,56"); repeated marks are grouping ("1.000.000"); a lone mark followed by exactly 3 digits ("5.000", "5,000")
+    is ambiguous -> rejected (confirm disabled, "Monto no válido o ambiguo").
+  - The dialog shows the interpretation under the field ("Saldo: $5,000"). Known gap: the transaction amount inputs keep their old
+    "." only behavior (out of scope, not changed).
+  - RED: 4 of 11 `AccountDetailViewModelTest` failed against the old single-separator parser (new signature, old logic). GREEN: 11/11.
+- R3-seed-getorthrow-crash. `TransactionTypeRepository.addAll` inserts all defaults in ONE SQLDelight transaction; `SeedDefaultTypesUseCase`
+  returns `Result<Unit>` and never throws (CancellationException rethrown). `TypesViewModel` logs a failure. `FlowTaApp.onCreate` now also runs
+  the idempotent seed-if-empty on every launch (previously it only ran when the Profile screen created `TypesViewModel`), so a failed
+  seed is retried on next launch. RED: `SeedDefaultTypesTest` failing-insert case left partial rows (assertion at the zero-types check). GREEN: 3/3.
+- R3-resetall-partial-after-wipe. `ResetAllDataUseCase`: wipe failure -> `Result.failure`, nothing else runs; after a committed wipe,
+  seed / clear preferences / cancel work are best effort (logged with `Log.w`, CancellationException rethrown) and the result is success.
+  `unitTests.isReturnDefaultValues = true` added so `Log` is safe in JVM tests. RED: 3 new tests failed (settings-clear failure, work-cancel
+  failure, cancellation propagation); the seed-failure case passed once seeding returned a Result. GREEN: `ResetAllDataTest` 10/10.
+- R3-order-not-asserted. `ResetAllDataTest` records `wipe`, `seed`, `settings.clear`, `work.cancel` events through recording wrappers and asserts the exact order
+  (also asserts `[wipe]` only on wipe failure).
+- R3-ticker-zone-change. `TimeChangeSignal` (domain) + `BroadcastTimeChangeSignal` (ACTION_TIMEZONE_CHANGED / TIME_CHANGED / DATE_CHANGED via
+  application context, resets `TimeZone.setDefault(null)` first) bound in `TimeModule`; `DayTicker.days()` = signal `.onStart{}` `.transformLatest{ loop }`
+  `.distinctUntilChanged()`, so a signal re-reads the zone/clock and reschedules the next midnight. Single-arg constructor kept for tests.
+  RED: zone-change and clock-jump tests failed with the signal ignored. GREEN: `DayTickerTest` 6/6.
+- Goals "reset together with everything" (user decision 2026-10-26): already covered. `ResetAllDataTest.wipeAll_emptiesEveryTable` asserts goals and
+  contributions are deleted; `AccountResetDataTest.reset_removesGoalContributionsOfAccount_andTakesThemBackFromGoal` asserts the account's
+  contributions are deleted and subtracted from goal progress with a floor of 0. No change needed.
+- Verification: `./gradlew testDebugUnitTest assembleDebug`: BUILD SUCCESSFUL, 96 tests, 0 failures.
+- Emulator (Pixel_6): created "Banco" ($1,000), ⋮ > Reiniciar cuenta, typed `5.000`: dialog showed "Saldo: $5,000"; confirmed; account header
+  showed $5,000. No FATAL / AndroidRuntime entries. Screenshots (scratchpad): `fix-balance-dialog.png`, `fix-balance-after.png`.
 
 ## Next step
 Delivery strategy (ask-on-risk) before any PR; ~600 authored lines in total, so a chain decision applies.
