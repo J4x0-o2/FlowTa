@@ -33,7 +33,7 @@ the wrong day/week/month.
 ## Tasks
 - [x] T1 Domain: `HistoryAggregator` (year → months, month → weeks) + models, pure Kotlin, unit-tested
       (week clipping, current month cut, local-zone boundaries, omitted empty months, bar fractions).
-- [ ] T2 Data: `Transaction.sq` query for transactions in a range + earliest date; repository and use cases
+- [x] T2 Data: `Transaction.sq` query for transactions in a range + earliest date; repository and use cases
       `ObserveYearHistoryUseCase` / `ObserveMonthHistoryUseCase`; tests with SQLite driver.
 - [ ] T3 Presentation: `HistoryViewModel`, `HistoryScreen`, `HistoryMonthScreen`, routes, top-bar icon;
       `assembleDebug` green.
@@ -49,11 +49,18 @@ the wrong day/week/month.
 _(filled per task: commit, checks, review outcome; a task's own hash is recorded in the next task's entry, since the doc ships inside the commit)_
 
 ### T1 Domain (done)
-- Commit: `feat(history): add period aggregator for weekly and monthly totals` (hash recorded in T2 entry).
+- Commit: `feat(history): add period aggregator for weekly and monthly totals` (`e559254`).
 - Files: `feature/history/domain/model/History.kt`, `HistoryAggregatorTest.kt`.
 - RED: with models and a `TODO()` aggregator, `./gradlew testDebugUnitTest --tests '*HistoryAggregatorTest*'`: 17 tests, 16 failed (`kotlin.NotImplementedError`); only the pure `PeriodTotals.net` test passed.
 - GREEN: `./gradlew testDebugUnitTest`: BUILD SUCCESSFUL (all unit tests).
 - Refactor: none needed.
 
+### T2 Data (done)
+- Commit: `feat(history): add history queries, repository and observe use cases` (hash recorded in T3 entry).
+- Files: `Transaction.sq` (+`selectMovementsInRange`, `earliestCreatedAt`; no schema change), `HistoryRepository`, `HistoryRepositoryImpl`, `ObserveHistoryUseCases.kt`, `RepositoryModule` binding, `HistoryDataTest`.
+- RED: with `TODO()` repository/use cases, `--tests '*HistoryDataTest*'`: 6 tests, 6 failed (`kotlin.NotImplementedError`).
+- GREEN: `./gradlew testDebugUnitTest`: BUILD SUCCESSFUL (HistoryAggregatorTest 17/17, HistoryDataTest 6/6).
+- `verifyDebugFlowTaDatabaseMigration`: hung (no BUILD result after >5 min, twice; daemon killed). No schema/migration file touched, so drift is not possible; not confirmed by the task.
+
 ## Next step
-T2.
+T3.

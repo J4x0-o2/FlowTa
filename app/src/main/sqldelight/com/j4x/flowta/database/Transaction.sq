@@ -67,3 +67,12 @@ netBalance:
 SELECT COALESCE(
     SUM(CASE WHEN flow_type = 'INCOME' THEN amount ELSE -amount END), 0.0
 ) AS net FROM user_transaction;
+
+selectMovementsInRange:
+SELECT flow_type, amount, created_at
+FROM user_transaction
+WHERE created_at >= :from AND created_at < :to
+ORDER BY created_at ASC;
+
+earliestCreatedAt:
+SELECT MIN(created_at) FROM user_transaction;
