@@ -6,6 +6,7 @@ import com.j4x.flowta.database.TransactionTypeQueries
 import com.j4x.flowta.feature.types.data.mapper.toDomain
 import com.j4x.flowta.feature.types.domain.model.TransactionType
 import com.j4x.flowta.feature.types.domain.repository.TransactionTypeRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -27,6 +28,23 @@ class TransactionTypeRepositoryImpl @Inject constructor(
         withContext(Dispatchers.IO) {
             runCatching {
                 queries.insert(UUID.randomUUID().toString(), name, category, System.currentTimeMillis())
+            }
+        }
+
+    override suspend fun addAll(types: List<Pair<String, String>>): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            try {
+                val now = System.currentTimeMillis()
+                queries.transaction {
+                    types.forEach { (name, category) ->
+                        queries.insert(UUID.randomUUID().toString(), name, category, now)
+                    }
+                }
+                Result.success(Unit)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Result.failure(e)
             }
         }
 

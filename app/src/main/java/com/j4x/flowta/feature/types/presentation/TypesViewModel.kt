@@ -1,5 +1,6 @@
 package com.j4x.flowta.feature.types.presentation
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.j4x.flowta.feature.types.domain.repository.TransactionTypeRepository
@@ -32,7 +33,10 @@ class TypesViewModel @Inject constructor(
             _state.update { it.copy(incomeTypes = income, expenseTypes = expense, transferTypes = transfer) }
         }.launchIn(viewModelScope)
 
-        viewModelScope.launch { seedDefaultTypes() }
+        viewModelScope.launch {
+            // Best effort: a failed seed is retried on the next launch (see FlowTaApp).
+            seedDefaultTypes().onFailure { Log.w("TypesViewModel", "Default types seeding failed", it) }
+        }
     }
 
     fun onIntent(intent: TypesIntent) {

@@ -47,6 +47,11 @@ android {
 
     buildFeatures { compose = true }
 
+    testOptions {
+        // android.util.Log in code under unit test must not throw "not mocked".
+        unitTests.isReturnDefaultValues = true
+    }
+
     sourceSets {
         getByName("debug") {
             java.srcDirs("${layout.buildDirectory.get()}/generated/sqldelight/code/FlowTaDatabase/debug")

@@ -1,6 +1,7 @@
 package com.j4x.flowta.feature.types.domain.usecase
 
 import com.j4x.flowta.feature.types.domain.repository.TransactionTypeRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
@@ -8,12 +9,18 @@ import javax.inject.Inject
 class SeedDefaultTypesUseCase @Inject constructor(
     private val repository: TransactionTypeRepository
 ) {
-    suspend operator fun invoke() {
-        if (repository.getAll().first().isNotEmpty()) return
-
-        DEFAULT_TYPES.forEach { (category, names) ->
-            names.forEach { name -> repository.add(name, category).getOrThrow() }
+    /** All defaults go in ONE transaction, so a failure leaves nothing half-seeded. Never throws. */
+    suspend operator fun invoke(): Result<Unit> {
+        val existing = try {
+            repository.getAll().first()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            return Result.failure(e)
         }
+        if (existing.isNotEmpty()) return Result.success(Unit)
+
+        return repository.addAll(DEFAULT_TYPES.flatMap { (category, names) -> names.map { it to category } })
     }
 
     companion object {
