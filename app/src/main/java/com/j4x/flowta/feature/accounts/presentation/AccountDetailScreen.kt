@@ -179,6 +179,7 @@ fun AccountDetailScreen(
             accountName    = account?.name ?: "cuenta",
             movementCount  = dialog.movementCount,
             currencySymbol = currencySymbol,
+            currencyCode   = currencyCode,
             onConfirm      = viewModel::confirmReset,
             onDismiss      = viewModel::dismissReset
         )
@@ -197,11 +198,12 @@ private fun ResetAccountDialogContent(
     accountName: String,
     movementCount: Long,
     currencySymbol: String,
+    currencyCode: CurrencyCode,
     onConfirm: (Double) -> Unit,
     onDismiss: () -> Unit
 ) {
     var amountText by remember { mutableStateOf("") }
-    val startingBalance = parseStartingBalance(amountText)
+    val startingBalance = parseStartingBalance(amountText, currencyCode)
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -219,6 +221,12 @@ private fun ResetAccountDialogContent(
                     placeholder     = { Text("0") },
                     prefix          = { Text(currencySymbol) },
                     isError         = startingBalance == null,
+                    supportingText  = {
+                        Text(
+                            if (startingBalance == null) "Monto no válido o ambiguo"
+                            else "Saldo: ${startingBalance.toBalanceString(currencySymbol, currencyCode)}"
+                        )
+                    },
                     singleLine      = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier        = Modifier.fillMaxWidth()
