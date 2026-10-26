@@ -39,7 +39,7 @@ delete/reset UI; `AccountIntent.DeleteAccount` exists but no screen dispatches i
 ## Tasks
 - [x] T1 Reset account: queries + repository + `ResetAccountUseCase` + dialog/menu; tests (SQLite driver).
 - [x] T2 Reset everything: queries + `ResetAllDataUseCase` (DB + DataStore + WorkManager + reseed) + Settings UI; tests.
-- [ ] T3 Emulator check of both flows.
+- [x] T3 Emulator check of both flows.
 
 ## Route per task
 - T1–T3: delegated direct (writer trigger: 2+ non-trivial files).
@@ -69,5 +69,16 @@ delete/reset UI; `AccountIntent.DeleteAccount` exists but no screen dispatches i
   The BORRAR gate lives in `SettingsState.canConfirmResetAll`; success emits `SettingsEffect.DataReset` and the
   screen navigates to Transactions with `popUpTo(0)`. Wipe failures keep the dialog open with an inline error.
 
+### T3 (emulator Pixel_6, real UI via adb input + uiautomator)
+- Setup: created account "Banco" (1000) next to existing "Efectivo"; transfer Banco -> Efectivo 300.
+- Reset account (Efectivo, balance 60): dialog said "Se borrarán 5 movimientos" (4 transactions + 1 transfer); entered 5000;
+  snackbar "Cuenta reiniciada"; Efectivo = $5,000 with "Sin movimientos"; Banco kept $700; History year = $0 / no movements;
+  Metrics all $0 / "Sin datos".
+- Reset all: confirm button dimmed until BORRAR typed (lowercase "borrar" kept it disabled); after confirm the app stayed open on
+  Transactions ("Registrá tu primera transacción", Balance $0); Profile: 0 cuentas, default categories re-seeded (16 chips);
+  Settings: theme back to system default, currency back to COP (was switched to USD before wiping).
+- `adb logcat -d`: no FATAL / AndroidRuntime entries for com.j4x.flowta.
+- Screenshots: scratchpad `reset-account-dialog.png`, `reset-account-after.png`, `reset-all-dialog.png`, `reset-all-after.png`.
+
 ## Next step
-T3 (emulator check).
+Delivery strategy (ask-on-risk) before any PR; ~600 authored lines in total, so a chain decision applies.
