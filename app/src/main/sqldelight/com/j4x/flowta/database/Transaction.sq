@@ -76,3 +76,12 @@ ORDER BY created_at ASC;
 
 earliestCreatedAt:
 SELECT MIN(created_at) FROM user_transaction;
+
+countByAccount:
+SELECT COUNT(*) FROM user_transaction WHERE account_id = ?;
+
+deleteByAccount:
+DELETE FROM user_transaction WHERE account_id = ?;
+
+deleteAll:
+DELETE FROM user_transaction;

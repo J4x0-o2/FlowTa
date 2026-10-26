@@ -2,6 +2,8 @@ package com.j4x.flowta.di
 
 import com.j4x.flowta.feature.accounts.data.repository.AccountRepositoryImpl
 import com.j4x.flowta.feature.accounts.domain.repository.AccountRepository
+import com.j4x.flowta.feature.accounts.data.repository.AccountResetRepositoryImpl
+import com.j4x.flowta.feature.accounts.domain.repository.AccountResetRepository
 import com.j4x.flowta.feature.goals.data.repository.GoalRepositoryImpl
 import com.j4x.flowta.feature.goals.domain.repository.GoalRepository
 import com.j4x.flowta.feature.history.data.repository.HistoryRepositoryImpl
@@ -33,6 +35,9 @@ abstract class RepositoryModule {
 
     @Binds @Singleton
     abstract fun bindAccountRepository(impl: AccountRepositoryImpl): AccountRepository
+
+    @Binds @Singleton
+    abstract fun bindAccountResetRepository(impl: AccountResetRepositoryImpl): AccountResetRepository
 
     @Binds @Singleton
     abstract fun bindTransferRepository(impl: TransferRepositoryImpl): TransferRepository

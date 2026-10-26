@@ -28,3 +28,6 @@ UPDATE account SET balance = ? WHERE id = ?;
 
 delete:
 DELETE FROM account WHERE id = ?;
+
+deleteAll:
+DELETE FROM account;

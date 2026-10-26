@@ -18,3 +18,9 @@ ORDER BY gc.created_at DESC;
 insert:
 INSERT INTO goal_contribution(id, goal_id, from_account_id, amount, note, created_at)
 VALUES(?, ?, ?, ?, ?, ?);
+
+deleteByAccount:
+DELETE FROM goal_contribution WHERE from_account_id = ?;
+
+deleteAll:
+DELETE FROM goal_contribution;

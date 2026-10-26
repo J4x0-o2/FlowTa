@@ -33,3 +33,14 @@ SELECT * FROM goal
 WHERE deadline IS NOT NULL
   AND deadline <= ?
   AND current_amount < target_amount;
+
+-- Takes back (floor 0) what an account contributed, before its contributions are deleted.
+subtractAccountContributions:
+UPDATE goal
+SET current_amount = MAX(0.0, current_amount - COALESCE(
+    (SELECT SUM(amount) FROM goal_contribution
+     WHERE goal_id = goal.id AND from_account_id = :accountId), 0.0))
+WHERE id IN (SELECT goal_id FROM goal_contribution WHERE from_account_id = :accountId);
+
+deleteAll:
+DELETE FROM goal;

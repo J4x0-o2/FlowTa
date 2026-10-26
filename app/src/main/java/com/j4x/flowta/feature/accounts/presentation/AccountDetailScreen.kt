@@ -14,6 +14,20 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.TextButton
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -57,7 +71,19 @@ fun AccountDetailScreen(
     val selectedTx = state.selectedTransactionId
         ?.let { id -> state.transactions.find { it.id == id } }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    var menuExpanded by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                is AccountDetailEffect.ShowMessage -> snackbarHostState.showSnackbar(effect.message)
+            }
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -84,6 +110,20 @@ fun AccountDetailScreen(
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { menuExpanded = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "Más opciones")
+                    }
+                    DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                        DropdownMenuItem(
+                            text = { Text("Reiniciar cuenta") },
+                            onClick = {
+                                menuExpanded = false
+                                viewModel.requestReset()
+                            }
+                        )
                     }
                 }
             )
@@ -134,12 +174,67 @@ fun AccountDetailScreen(
         }
     }
 
+    state.resetDialog?.let { dialog ->
+        ResetAccountDialogContent(
+            accountName    = account?.name ?: "cuenta",
+            movementCount  = dialog.movementCount,
+            currencySymbol = currencySymbol,
+            onConfirm      = viewModel::confirmReset,
+            onDismiss      = viewModel::dismissReset
+        )
+    }
+
     if (selectedTx != null) {
         TransactionDetailBottomSheet(
             transaction = selectedTx,
             onDismiss   = { viewModel.dismissDetail() }
         )
     }
+}
+
+@Composable
+private fun ResetAccountDialogContent(
+    accountName: String,
+    movementCount: Long,
+    currencySymbol: String,
+    onConfirm: (Double) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var amountText by remember { mutableStateOf("") }
+    val startingBalance = parseStartingBalance(amountText)
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("¿Reiniciar $accountName?") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    "Se borrarán $movementCount movimientos de esta cuenta " +
+                        "(ingresos, gastos y transferencias). Esta acción no se puede deshacer."
+                )
+                OutlinedTextField(
+                    value           = amountText,
+                    onValueChange   = { amountText = it },
+                    label           = { Text("Saldo inicial") },
+                    placeholder     = { Text("0") },
+                    prefix          = { Text(currencySymbol) },
+                    isError         = startingBalance == null,
+                    singleLine      = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier        = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick  = { startingBalance?.let(onConfirm) },
+                enabled  = startingBalance != null
+            ) {
+                Text("Reiniciar", color = MaterialTheme.colorScheme.error)
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } }
+    )
 }
 
 @Composable

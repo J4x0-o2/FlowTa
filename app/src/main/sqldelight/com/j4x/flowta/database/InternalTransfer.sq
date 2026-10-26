@@ -26,3 +26,14 @@ totalAmountInRange:
 SELECT COALESCE(SUM(amount), 0.0) AS total
 FROM internal_transfer
 WHERE created_at >= :from AND created_at <= :to;
+
+countByAccount:
+SELECT COUNT(*) FROM internal_transfer
+WHERE from_account_id = :accountId OR to_account_id = :accountId;
+
+deleteByAccount:
+DELETE FROM internal_transfer
+WHERE from_account_id = :accountId OR to_account_id = :accountId;
+
+deleteAll:
+DELETE FROM internal_transfer;
