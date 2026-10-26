@@ -3,6 +3,7 @@ package com.j4x.flowta.feature.history.presentation
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.j4x.flowta.core.domain.time.DayTicker
 import com.j4x.flowta.feature.history.domain.usecase.ObserveMonthHistoryUseCase
 import com.j4x.flowta.feature.history.domain.usecase.ObserveYearHistoryUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -12,7 +13,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import java.time.LocalDate
 import javax.inject.Inject
 
 /** Year screen. The selected year lives in [SavedStateHandle] so it survives process death. */
@@ -20,13 +20,15 @@ import javax.inject.Inject
 @HiltViewModel
 class HistoryViewModel @Inject constructor(
     private val savedState: SavedStateHandle,
-    observeYear: ObserveYearHistoryUseCase
+    observeYear: ObserveYearHistoryUseCase,
+    ticker: DayTicker
 ) : ViewModel() {
 
-    private val selectedYear = savedState.getStateFlow(KEY_YEAR, LocalDate.now().year)
+    private val selectedYear = savedState.getStateFlow(KEY_YEAR, ticker.today().year)
 
-    val state: StateFlow<HistoryState> = selectedYear
-        .flatMapLatest { observeYear(it) }
+    /** Re-subscribes on every local day change so "today" never goes stale while the screen stays open. */
+    val state: StateFlow<HistoryState> = ticker.days()
+        .flatMapLatest { today -> selectedYear.flatMapLatest { observeYear(it, ticker.zone, today) } }
         .map { HistoryState(YearHistoryModel.from(it)) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), HistoryState())
 
@@ -47,13 +49,15 @@ class HistoryViewModel @Inject constructor(
 @HiltViewModel
 class HistoryMonthViewModel @Inject constructor(
     savedState: SavedStateHandle,
-    observeMonth: ObserveMonthHistoryUseCase
+    observeMonth: ObserveMonthHistoryUseCase,
+    ticker: DayTicker
 ) : ViewModel() {
 
     private val year: Int = checkNotNull(savedState["year"])
     private val month: Int = checkNotNull(savedState["month"])
 
-    val state: StateFlow<HistoryMonthState> = observeMonth(year, month)
+    val state: StateFlow<HistoryMonthState> = ticker.days()
+        .flatMapLatest { today -> observeMonth(year, month, ticker.zone, today) }
         .map { HistoryMonthState(MonthHistoryModel.from(it)) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), HistoryMonthState())
 }

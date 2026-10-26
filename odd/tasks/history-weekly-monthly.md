@@ -37,6 +37,8 @@ the wrong day/week/month.
       `ObserveYearHistoryUseCase` / `ObserveMonthHistoryUseCase`; tests with SQLite driver.
 - [x] T3 Presentation: `HistoryViewModel`, `HistoryScreen`, `HistoryMonthScreen`, routes, top-bar icon;
       `assembleDebug` green.
+- [x] T4 Fix review follow-ups: make "today" reactive (`DayTicker` + `Clock` Hilt binding; both ViewModels
+      re-subscribe via `flatMapLatest` on day change) and add `HistoryViewModel` tests (year stepping bounds).
 
 ## Route per task
 - T1–T3: delegated direct (writer trigger: 2+ non-trivial files per task).
@@ -67,6 +69,24 @@ _(filled per task: commit, checks, review outcome; a task's own hash is recorded
 - Files: `feature/history/presentation/` (`HistoryModels`, `HistoryContract`, `HistoryViewModel` + `HistoryMonthViewModel`, `HistoryScreen` + `HistoryMonthScreen`), `Screen.kt`, `NavGraph.kt`, `TransactionScreen.kt` (CalendarMonth icon, "Historial"), `CLAUDE.md`, `HistoryModelsTest`.
 - RED: `--tests '*HistoryModelsTest*'` failed to compile (unresolved `monthName`, `weekRangeText`, `YearHistoryModel`, ...). After implementing, one test failed because it assumed oldest-first weeks while the spec says newest first; the test was corrected, not the model.
 - GREEN: `./gradlew testDebugUnitTest assembleDebug`: BUILD SUCCESSFUL (49 unit tests).
+
+### T4 Reactive today (done)
+- Commit: `fix(history): refresh current day across midnight` (hash in final report).
+- Files: `core/domain/time/DayTicker.kt`, `di/TimeModule.kt` (`Clock` binding, zone read from the system each call), `HistoryViewModel.kt` (both VMs: `ticker.days().flatMapLatest`; initial year from `ticker.today()`), tests `DayTickerTest`, `HistoryViewModelTest`, `TestClocks`. Use cases and aggregator unchanged.
+- RED: with `DayTicker` as `TODO()` and the VMs accepting but ignoring the ticker, `--tests '*DayTickerTest*' --tests '*HistoryViewModelTest*'`: 9 tests, 6 failed (3 `NotImplementedError` in DayTickerTest; year-rollover, month-marker and month-week rollover VM tests failed on stale values). The 3 year-stepping bound tests passed from the start (characterization of existing behavior, R3-vm-untested).
+- GREEN: same command after implementing: BUILD SUCCESSFUL (9/9).
+- Full checks: `./gradlew testDebugUnitTest assembleDebug`: BUILD SUCCESSFUL.
+
+### Native review (T1–T3 as one slice, base 4c92755)
+- Assessed tier: medium (`slice_budget_reached`, 18 files / 1331 lines). Consent: granted.
+- Lens: review-reliability → approved, acknowledged (lineage `review-aaa0ca94c9e9cd01`, authority burned).
+- Advisory follow-ups (non-blocking):
+  - R3-stale-today (WARNING): `today` captured once in `ObserveHistoryUseCases.kt:26`; across midnight
+    the "en curso" marker, current-month week cut and year-forward guard go stale.
+  - R3-vm-untested (SUGGESTION): no ViewModel tests for year stepping / nav args.
+- Spot check by parent: `./gradlew testDebugUnitTest assembleDebug` → BUILD SUCCESSFUL (up-to-date).
+- Not run: `verifyDebugFlowTaDatabaseMigration` hung twice; no schema files changed (queries only).
+- Not done: on-device check.
 
 ## Next step
 Manual check on device, then push/PR (user decision).

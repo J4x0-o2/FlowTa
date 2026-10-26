@@ -147,6 +147,7 @@ Nota (Windows): los workers de Gradle 9 arrancan solo con `SystemRoot` en el ent
 - Barras verde/roja escaladas al mayor ingreso/gasto entre hermanos (meses del año / semanas del mes)
 - `HistoryAggregator` (dominio puro) agrupa por fecha LOCAL (`ZoneId`) en Kotlin, no en SQL; transferencias excluidas
 - Queries nuevas en `Transaction.sq`: `selectMovementsInRange` (`[from, to)`), `earliestCreatedAt`; sin cambio de schema
+- `DayTicker` (`core/domain/time`, sobre `Clock` inyectado por `TimeModule`) emite hoy y cada medianoche local; ambos ViewModels re-suscriben con `flatMapLatest` para que "en curso" y los límites de año/semana no queden viejos
 - `ObserveYearHistoryUseCase(year)` / `ObserveMonthHistoryUseCase(year, month)`; `HistoryViewModel` (año en `SavedStateHandle`) y `HistoryMonthViewModel` (args de navegación)
 
 ### Moneda reactiva
