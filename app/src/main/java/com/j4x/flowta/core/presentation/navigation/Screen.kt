@@ -5,6 +5,12 @@ sealed class Screen(val route: String) {
     data object Profile      : Screen("profile")
     data object Goals        : Screen("goals")
     data object Metrics      : Screen("metrics")
+    data object History      : Screen("history")
+
+    data class HistoryMonth(val year: String = "{year}", val month: String = "{month}") :
+        Screen("history_month/{year}/{month}") {
+        fun createRoute(year: Int, month: Int) = "history_month/$year/$month"
+    }
 
     data class AccountDetail(val accountId: String = "{accountId}") :
         Screen("account_detail/{accountId}") {

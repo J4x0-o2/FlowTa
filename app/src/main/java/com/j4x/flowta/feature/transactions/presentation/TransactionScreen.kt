@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -105,6 +106,9 @@ fun TransactionScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { navController.navigate(Screen.History.route) }) {
+                        Icon(Icons.Default.CalendarMonth, contentDescription = "Historial")
+                    }
                     IconButton(onClick = { navController.navigate(Screen.Metrics.route) }) {
                         Icon(Icons.Default.BarChart, contentDescription = "Métricas")
                     }

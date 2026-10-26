@@ -35,7 +35,7 @@ the wrong day/week/month.
       (week clipping, current month cut, local-zone boundaries, omitted empty months, bar fractions).
 - [x] T2 Data: `Transaction.sq` query for transactions in a range + earliest date; repository and use cases
       `ObserveYearHistoryUseCase` / `ObserveMonthHistoryUseCase`; tests with SQLite driver.
-- [ ] T3 Presentation: `HistoryViewModel`, `HistoryScreen`, `HistoryMonthScreen`, routes, top-bar icon;
+- [x] T3 Presentation: `HistoryViewModel`, `HistoryScreen`, `HistoryMonthScreen`, routes, top-bar icon;
       `assembleDebug` green.
 
 ## Route per task
@@ -56,11 +56,17 @@ _(filled per task: commit, checks, review outcome; a task's own hash is recorded
 - Refactor: none needed.
 
 ### T2 Data (done)
-- Commit: `feat(history): add history queries, repository and observe use cases` (hash recorded in T3 entry).
+- Commit: `feat(history): add history queries, repository and observe use cases` (`7f3e56a`).
 - Files: `Transaction.sq` (+`selectMovementsInRange`, `earliestCreatedAt`; no schema change), `HistoryRepository`, `HistoryRepositoryImpl`, `ObserveHistoryUseCases.kt`, `RepositoryModule` binding, `HistoryDataTest`.
 - RED: with `TODO()` repository/use cases, `--tests '*HistoryDataTest*'`: 6 tests, 6 failed (`kotlin.NotImplementedError`).
 - GREEN: `./gradlew testDebugUnitTest`: BUILD SUCCESSFUL (HistoryAggregatorTest 17/17, HistoryDataTest 6/6).
 - `verifyDebugFlowTaDatabaseMigration`: hung (no BUILD result after >5 min, twice; daemon killed). No schema/migration file touched, so drift is not possible; not confirmed by the task.
 
+### T3 Presentation (done)
+- Commit: `feat(history): add history screens, navigation and entry icon` (hash in final report).
+- Files: `feature/history/presentation/` (`HistoryModels`, `HistoryContract`, `HistoryViewModel` + `HistoryMonthViewModel`, `HistoryScreen` + `HistoryMonthScreen`), `Screen.kt`, `NavGraph.kt`, `TransactionScreen.kt` (CalendarMonth icon, "Historial"), `CLAUDE.md`, `HistoryModelsTest`.
+- RED: `--tests '*HistoryModelsTest*'` failed to compile (unresolved `monthName`, `weekRangeText`, `YearHistoryModel`, ...). After implementing, one test failed because it assumed oldest-first weeks while the spec says newest first; the test was corrected, not the model.
+- GREEN: `./gradlew testDebugUnitTest assembleDebug`: BUILD SUCCESSFUL (49 unit tests).
+
 ## Next step
-T3.
+Manual check on device, then push/PR (user decision).

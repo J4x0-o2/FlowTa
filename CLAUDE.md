@@ -22,6 +22,7 @@ App Android de finanzas personales. Transacciones como tarjetas compactas. Ingre
 | F08 Historial por cuenta | ✅ COMPLETO |
 | F09 Perfil completo | ✅ COMPLETO |
 | Métricas | ✅ COMPLETO |
+| Historial semanal/mensual/anual | ✅ COMPLETO |
 | Moneda reactiva | ✅ COMPLETO |
 | Snackbars de error | ✅ COMPLETO |
 | Ícono personalizado | ✅ COMPLETO |
@@ -140,6 +141,14 @@ Nota (Windows): los workers de Gradle 9 arrancan solo con `SystemRoot` en el ent
 - Gráfico donut Canvas — gastos por categoría con leyenda y porcentajes
 - `MetricsViewModel` — `_selectedRange` → `flatMapLatest` → `combine(flows, categories, transfers)`
 
+### Historial (semanal / mensual / anual)
+- `HistoryScreen` — stepper de año, "Neto del año" + tiles Ingresos/Gastos, tarjetas "Por mes" (solo meses con movimientos, más nuevo primero, "· en curso")
+- `HistoryMonthScreen` — "Neto del mes" + tiles Ingresos/Gastos/Movimientos, tarjetas "Por semana" (lun–dom recortadas al mes, no clickeables)
+- Barras verde/roja escaladas al mayor ingreso/gasto entre hermanos (meses del año / semanas del mes)
+- `HistoryAggregator` (dominio puro) agrupa por fecha LOCAL (`ZoneId`) en Kotlin, no en SQL; transferencias excluidas
+- Queries nuevas en `Transaction.sq`: `selectMovementsInRange` (`[from, to)`), `earliestCreatedAt`; sin cambio de schema
+- `ObserveYearHistoryUseCase(year)` / `ObserveMonthHistoryUseCase(year, month)`; `HistoryViewModel` (año en `SavedStateHandle`) y `HistoryMonthViewModel` (args de navegación)
+
 ### Moneda reactiva
 - `LocalCurrencySymbol` — `compositionLocalOf { "$" }` en `core/presentation/`
 - Provisto en `MainActivity` leyendo `CurrencyCode` de `SettingsViewModel`
@@ -157,6 +166,8 @@ Nota (Windows): los workers de Gradle 9 arrancan solo con `SystemRoot` en el ent
 ```
 TransactionScreen (start)
   ├── → MetricsScreen       (BarChart icon en header)
+  ├── → HistoryScreen       (CalendarMonth icon en header)
+  │     └── → HistoryMonthScreen  (tap en tarjeta de mes; ruta history_month/{year}/{month})
   ├── → ProfileScreen       (Person icon en header)
   │     └── → AccountDetailScreen  (tap en AccountCard)
   └── ModalBottomSheets (estado local, no rutas):

@@ -15,6 +15,8 @@ import androidx.navigation.navArgument
 import com.j4x.flowta.feature.accounts.presentation.AccountDetailScreen
 import com.j4x.flowta.feature.goals.presentation.GoalDetailScreen
 import com.j4x.flowta.feature.goals.presentation.GoalsScreen
+import com.j4x.flowta.feature.history.presentation.HistoryMonthScreen
+import com.j4x.flowta.feature.history.presentation.HistoryScreen
 import com.j4x.flowta.feature.metrics.presentation.MetricsScreen
 import com.j4x.flowta.feature.profile.presentation.ProfileScreen
 import com.j4x.flowta.feature.transactions.presentation.TransactionScreen
@@ -62,6 +64,18 @@ fun NavGraph() {
         }
         composable(Screen.Metrics.route) {
             MetricsScreen(navController = navController)
+        }
+        composable(Screen.History.route) {
+            HistoryScreen(navController = navController)
+        }
+        composable(
+            route = Screen.HistoryMonth().route,
+            arguments = listOf(
+                navArgument("year") { type = NavType.IntType },
+                navArgument("month") { type = NavType.IntType }
+            )
+        ) {
+            HistoryMonthScreen(navController = navController)
         }
         composable(
             route = Screen.AccountDetail().route,
