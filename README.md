@@ -1,349 +1,110 @@
-# FlowTa 💰
+# FlowTa
 
-**FlowTa** es una app Android de finanzas personales que te permite registrar ingresos, gastos y transferencias de forma rápida e intuitiva. La interfaz está inspirada en el concepto de "chat financiero": cada transacción aparece como una burbuja compacta — ingresos a la derecha en verde, gastos a la izquierda en rojo.
+**Tus ingresos y gastos, claros.** FlowTa es una app Android de finanzas personales con una interfaz de chat: cada movimiento es una burbuja, los ingresos a la derecha en verde y los gastos a la izquierda en rojo. Registrar algo toma unos toques y todos los datos se quedan en el teléfono.
 
----
+![FlowTa: pantalla principal en tema claro y oscuro](docs/images/cover.png)
 
-## Características
+## Qué hace
 
-### Registro de transacciones
-- **3 tipos**: Ingreso, Gasto, Transferencia interna entre cuentas
-- **Categorías personalizables** para cada tipo
-- **Fuente de ingreso** opcional (efectivo, transferencia, freelance, etc.)
-- **Notas** opcionales por transacción
-- Formulario en `ModalBottomSheet` con tabs, sin interrumpir el flujo
+- **Registro en burbujas.** Ingresos, gastos y transferencias entre cuentas desde una sola hoja con tres pestañas. Cada movimiento tiene categoría, nota opcional y, en los ingresos, una fuente.
+- **Cuentas y metas de ahorro.** Efectivo, cuenta bancaria, billetera digital, ahorros u otra. Las cuentas de ahorros pueden tener una meta con barra de progreso. El saldo se actualiza con cada movimiento.
+- **Métricas.** Ingresos, gastos, transferencias y flujo neto por semana, mes o todo el tiempo, con gráfico de barras por día y gráfico de gastos por categoría.
+- **Historial por semana, mes y año.** Neto anual, desglose por mes y, al abrir un mes, desglose por semana (lunes a domingo). Los límites se calculan con la fecha local del dispositivo.
+- **Montos según la moneda.** En COP, `5.000` y `5,000` significan cinco mil; las entradas ambiguas se rechazan en lugar de interpretarse a ciegas.
+- **Reiniciar una cuenta.** Borra los movimientos de una cuenta y la deja con el saldo inicial que indiques.
+- **Borrar todos los datos.** Desde Ajustes, con confirmación escribiendo `BORRAR`; la app queda como recién instalada.
+- **Ajustes.** Tema claro u oscuro y moneda COP, USD o EUR.
+- **Sin conexión.** La app no declara permiso de internet; no hay cuentas de usuario ni servidores.
 
-### Gestión de cuentas
-- Tipos: Efectivo, Cuenta bancaria, Billetera digital, Ahorros, Otro
-- **Meta de ahorro** para cuentas tipo Ahorros con barra de progreso
-- Balance actualizado automáticamente con cada transacción o transferencia
+## Capturas
 
-### Historial
-- Vista global con todas las transacciones ordenadas por fecha (más reciente primero)
-- Vista por cuenta individual con su historial y progreso de meta
-- **Detalle de transacción** al tocar cualquier burbuja: categoría, fuente, cuenta, fecha y nota
+![Pantalla principal en tema claro y oscuro](docs/images/home.png)
 
-### Métricas
-- Filtro por **Semana / Mes / Todo el tiempo**
-- 4 tarjetas resumen: Ingresos, Gastos, Transferencias, Flujo neto
-- **Gráfico de barras** Ingresos vs Gastos por día (Canvas nativo)
-- **Gráfico donut** Gastos por categoría con leyenda y porcentajes (Canvas nativo)
+![Historial anual y detalle de un mes](docs/images/history.png)
 
-### Configuración
-- **Tema**: Claro, Oscuro o Sistema
-- **Moneda**: COP (Peso colombiano), USD (Dólar), EUR (Euro)
-  - El símbolo se propaga reactivamente a toda la app
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/metrics.png" width="260" alt="Métricas"><br><sub>Métricas del mes</sub></td>
+    <td align="center"><img src="docs/images/profile.png" width="260" alt="Perfil"><br><sub>Capital total, cuentas y meta de ahorro</sub></td>
+    <td align="center"><img src="docs/images/reset.png" width="260" alt="Reiniciar cuenta"><br><sub>Reiniciar una cuenta</sub></td>
+  </tr>
+</table>
 
-### Tipos de categorías
-- Gestionados desde Perfil: agregar y eliminar chips por categoría
-- Defaults pre-cargados en el primer arranque: 5 ingresos, 9 gastos, 2 transferencias, 7 fuentes
+Los datos de las capturas son de demostración.
 
----
+## Stack técnico
 
-## Capturas de pantalla
+| Área | Tecnología |
+|------|------------|
+| Lenguaje | Kotlin 2.0.0 |
+| UI | Jetpack Compose con Material 3 (BOM 2024.09.00) y Navigation Compose |
+| Inyección de dependencias | Hilt 2.51.1 |
+| Base de datos | SQLDelight 2.0.2 (SQLite) |
+| Preferencias | DataStore Preferences |
+| Tareas en segundo plano | WorkManager |
+| Asincronía | Coroutines y Flow |
+| Pruebas | JUnit 4, MockK, Turbine y el driver SQLite de SQLDelight |
+| Build | Android Gradle Plugin 8.5.0, KSP 2.0.0-1.0.24, Gradle 9.2.1 |
+| Plataforma | `minSdk` 29, `targetSdk` y `compileSdk` 35, Java/Kotlin 17 |
 
-| Pantalla principal | Registro | Detalle |
-|---|---|---|
-| Lista de transacciones con balance en header | Sheet con 3 tabs (Ingreso / Gasto / Transferencia) | Badge de tipo, monto, campos y fecha |
+Los gráficos de Métricas se dibujan con `Canvas` de Compose, sin librerías de gráficos.
 
-| Perfil | Métricas | Configuración |
-|---|---|---|
-| Capital total, cuentas y categorías | Barras + donut por período | Tema y moneda |
-
----
+> No actualizar AGP a 9.x: SQLDelight 2.x usa una API que AGP 9 eliminó.
 
 ## Arquitectura
 
-FlowTa sigue **Clean Architecture** con **MVI** (Model-View-Intent) manual en la capa de presentación.
+Organización por funcionalidad (*feature-first*). Cada feature separa `domain`, `data` y `presentation`, y la presentación usa MVI manual: un `State` inmutable, `Intent` para las acciones del usuario y `Effect` para eventos de una sola vez (snackbars, navegación).
 
 ```
-app/
-└── src/main/java/com/j4x/flowta/
-    ├── core/
-    │   ├── domain/model/          # Currency, CurrencyCode
-    │   └── presentation/
-    │       ├── components/        # TransactionBubble, BottomInputBar
-    │       ├── navigation/        # NavGraph, Screen
-    │       ├── theme/             # Color, Type, Theme
-    │       └── LocalCurrencySymbol.kt
-    ├── feature/
-    │   ├── accounts/
-    │   │   ├── data/              # AccountRepositoryImpl, AccountMapper
-    │   │   ├── domain/            # Account, AccountRepository, use cases
-    │   │   └── presentation/      # AccountViewModel, AccountCard, NewAccountBottomSheet, AccountDetailScreen
-    │   ├── metrics/
-    │   │   ├── data/              # MetricsRepositoryImpl
-    │   │   ├── domain/            # CategoryExpense, DailyFlow, MetricsRepository
-    │   │   └── presentation/      # MetricsViewModel, MetricsScreen
-    │   ├── profile/
-    │   │   ├── data/              # ProfileRepositoryImpl
-    │   │   ├── domain/            # ProfileRepository
-    │   │   └── presentation/      # ProfileScreen
-    │   ├── settings/
-    │   │   ├── data/              # SettingsRepositoryImpl (DataStore)
-    │   │   ├── domain/            # UserPreferences, AppTheme, SettingsRepository
-    │   │   └── presentation/      # SettingsViewModel, SettingsBottomSheet
-    │   ├── transactions/
-    │   │   ├── data/              # TransactionRepositoryImpl, TransactionMapper
-    │   │   ├── domain/            # Transaction, NewTransaction, TransactionRepository, use cases
-    │   │   └── presentation/      # TransactionViewModel, AddTransactionViewModel
-    │   │                          # TransactionScreen, NewTransactionBottomSheet, TransactionDetailBottomSheet
-    │   ├── transfers/
-    │   │   ├── data/              # TransferRepositoryImpl, TransferMapper
-    │   │   ├── domain/            # InternalTransfer, NewInternalTransfer, TransferRepository
-    │   │   └── presentation/      # (pantalla placeholder)
-    │   └── types/
-    │       ├── data/              # TransactionTypeRepositoryImpl, TransactionTypeMapper
-    │       ├── domain/            # TransactionType, TypeCategory, TransactionTypeRepository
-    │       └── presentation/      # TypesViewModel, TypesBottomSheet, TypeChip
-    └── di/
-        ├── DatabaseModule.kt      # SQLDelight queries
-        └── RepositoryModule.kt    # Bindings Hilt
+app/src/main/java/com/j4x/flowta/
+├── FlowTaApp.kt, MainActivity.kt
+├── core/
+│   ├── data/            # base de datos, tiempo (DayTicker), WorkManager
+│   ├── domain/          # modelos compartidos (moneda), contratos de tiempo y trabajo
+│   ├── presentation/    # tema, navegación, componentes, formato y parseo de montos
+│   └── receiver/        # BootReceiver
+├── di/                  # módulos Hilt: base de datos, repositorios, tiempo, trabajo
+└── feature/
+    ├── accounts/        # cuentas, detalle, reinicio de cuenta
+    ├── transactions/    # pantalla principal, registro y detalle de movimientos
+    ├── transfers/       # transferencias entre cuentas
+    ├── types/           # categorías de ingreso, gasto y transferencia
+    ├── metrics/         # métricas y gráficos
+    ├── history/         # historial semanal, mensual y anual
+    ├── profile/         # perfil: capital total, cuentas y categorías
+    ├── settings/        # tema, moneda, borrado de datos
+    └── goals/           # metas de ahorro (dominio y datos; interfaz pendiente)
 ```
 
-### Patrón MVI por feature
+- Los casos de uso exponen un único método público (`operator fun invoke`).
+- Los repositorios son interfaces de dominio con implementación en `data`; los mappers convierten filas de SQLDelight a modelos de dominio.
+- Las hojas modales (`ModalBottomSheet`) son estado local de cada pantalla, no rutas de navegación.
+- El historial agrupa por fecha local en Kotlin (`HistoryAggregator`, dominio puro) y no en SQL.
 
-Cada feature expone tres artefactos de contrato:
+## Compilar y ejecutar
 
-```kotlin
-data class FeatureState(...)          // Estado inmutable de la UI
-sealed interface FeatureIntent { ... } // Acciones que el usuario puede disparar
-sealed interface FeatureEffect { ... } // Efectos de una sola vez (navegación, snackbar)
-```
-
-El ViewModel expone `StateFlow<FeatureState>` y `Flow<FeatureEffect>` vía `Channel`. La pantalla:
-1. Observa el estado con `collectAsStateWithLifecycle()`
-2. Colecta efectos con `LaunchedEffect(Unit)`
-3. Envía intents con `viewModel.onIntent(...)`
-
-### ModalBottomSheets
-
-Los sheets **no son rutas de NavGraph** — se controlan con estado local en la pantalla padre:
-
-```kotlin
-var activeSheet by remember { mutableStateOf<ActiveSheet?>(null) }
-// o
-var showAddSheet by remember { mutableStateOf(false) }
-```
-
----
-
-## Stack tecnológico
-
-| Herramienta | Versión | Uso |
-|---|---|---|
-| **AGP** | 8.5.0 | Build del proyecto (⚠️ no actualizar a 9.x) |
-| **Kotlin** | 2.0.0 | Lenguaje principal |
-| **KSP** | 2.0.0-1.0.24 | Procesador de anotaciones |
-| **Jetpack Compose BOM** | 2024.09.00 | UI declarativa |
-| **Material 3** | vía BOM | Design system + componentes |
-| **Hilt** | 2.51.1 | Inyección de dependencias |
-| **SQLDelight** | 2.0.2 | Base de datos SQLite con type-safety |
-| **DataStore Preferences** | — | Persistencia de ajustes (tema, moneda) |
-| **Navigation Compose** | — | Navegación entre pantallas |
-| **Lifecycle / ViewModel** | — | MVI + estado reactivo |
-| **Coroutines + Flow** | — | Programación asíncrona reactiva |
-
-### Sin dependencias de charting
-
-Los gráficos de Métricas están implementados con **Canvas nativo de Compose** (`drawRect`, `drawArc`) para mantener cero dependencias externas adicionales.
-
----
-
-## Base de datos (SQLDelight)
-
-```sql
--- Cuentas
-CREATE TABLE account (
-    id               TEXT NOT NULL PRIMARY KEY,
-    name             TEXT NOT NULL,
-    type             TEXT NOT NULL,  -- CASH | BANK | DIGITAL_WALLET | SAVINGS | OTHER
-    balance          REAL NOT NULL,
-    meta_amount      REAL,           -- solo SAVINGS
-    meta_periodicity TEXT,           -- "monthly"
-    created_at       INTEGER NOT NULL
-);
-
--- Transacciones
-CREATE TABLE user_transaction (
-    id                  TEXT NOT NULL PRIMARY KEY,
-    amount              REAL NOT NULL,
-    flow_type           TEXT NOT NULL,  -- INCOME | EXPENSE
-    transaction_type_id TEXT NOT NULL REFERENCES transaction_type(id),
-    source_type_id      TEXT REFERENCES transaction_type(id),  -- INCOME_SOURCE, nullable
-    account_id          TEXT NOT NULL REFERENCES account(id),
-    note                TEXT,
-    created_at          INTEGER NOT NULL
-);
-
--- Transferencias internas
-CREATE TABLE internal_transfer (
-    id               TEXT NOT NULL PRIMARY KEY,
-    from_account_id  TEXT NOT NULL REFERENCES account(id),
-    to_account_id    TEXT NOT NULL REFERENCES account(id),
-    transfer_type_id TEXT REFERENCES transaction_type(id),
-    amount           REAL NOT NULL,
-    note             TEXT,
-    created_at       INTEGER NOT NULL
-);
-
--- Tipos / Categorías
-CREATE TABLE transaction_type (
-    id         TEXT NOT NULL PRIMARY KEY,
-    name       TEXT NOT NULL,
-    category   TEXT NOT NULL,  -- INCOME | EXPENSE | RECURRING_EXPENSE | TRANSFER | INCOME_SOURCE
-    created_at INTEGER NOT NULL
-);
-```
-
-> La DB se recrea en cada instalación (app en desarrollo, sin migraciones `.sqm`).
-
----
-
-## Navegación
-
-```
-TransactionScreen  ←── pantalla de inicio
-    │
-    ├── [BarChart icon] ──► MetricsScreen
-    │                           └── [←] volver
-    │
-    ├── [Person icon] ──► ProfileScreen
-    │                         └── [AccountCard tap] ──► AccountDetailScreen
-    │                                                        └── [←] volver
-    │
-    └── Sheets (estado local, fuera del NavGraph):
-            ├── NewTransactionBottomSheet  (tap en barra inferior)
-            └── TransactionDetailBottomSheet  (tap en burbuja)
-```
-
----
-
-## Moneda reactiva
-
-El símbolo de moneda se propaga mediante `CompositionLocal`:
-
-```kotlin
-// core/presentation/LocalCurrencySymbol.kt
-val LocalCurrencySymbol = compositionLocalOf { "$" }
-
-// MainActivity.kt
-val symbol = CurrencyCode.entries.find { it.displayCode == prefs.currencyCode }?.symbol ?: "$"
-CompositionLocalProvider(LocalCurrencySymbol provides symbol) {
-    NavGraph()
-}
-
-// Cualquier composable
-val symbol = LocalCurrencySymbol.current
-Text("$symbol${amount}")
-```
-
-Cambiar la moneda en Settings actualiza **toda la app instantáneamente** sin recomposición manual.
-
----
-
-## Construcción y ejecución
-
-### Requisitos
-- Android Studio Ladybug o superior
-- JDK 17
-- Android SDK 35
-
-### Clonar y buildear
+Requisitos: Android Studio reciente (incluye el JDK 17 que usa el proyecto) y un dispositivo o emulador con Android 10 (API 29) o superior.
 
 ```bash
-git clone <repo-url>
-cd FlowTa
-./gradlew assembleDebug
+./gradlew assembleDebug          # genera app/build/outputs/apk/debug/app-debug.apk
+./gradlew testDebugUnitTest      # pruebas unitarias
+adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-### Comandos frecuentes
+En Windows usa `gradlew.bat` o ejecuta los comandos desde Git Bash. También puedes abrir la carpeta en Android Studio y ejecutar la configuración `app`.
 
-```bash
-./gradlew assembleDebug                         # APK de desarrollo
-./gradlew assembleRelease                       # APK de producción (requiere keystore)
-./gradlew generateDebugFlowTaDatabaseInterface  # Regenerar código SQLDelight
-./gradlew test                                  # Tests unitarios
-```
+**Cambios de esquema.** El esquema está versionado (snapshot `app/src/main/sqldelight/databases/1.db`) y las migraciones se verifican con `./gradlew verifySqlDelightMigration`. Antes de tocar un `.sq`, sigue el procedimiento de la sección *Migraciones* de [`CLAUDE.md`](CLAUDE.md).
 
-### Instalar en dispositivo
+**Nota para Windows.** El módulo `tools/sqlite-worker-shim` solo participa en el build (no va en el APK): evita que `sqlite-jdbc` intente extraer su librería nativa en `C:\Windows` cuando Gradle 9 ejecuta las tareas de SQLDelight. Los detalles están en `CLAUDE.md`.
 
-```bash
-./gradlew installDebug
-# o desde Android Studio: Run > Run 'app'
-```
+## Datos y privacidad
 
----
+Toda la información (cuentas, movimientos, categorías y preferencias) se guarda únicamente en el dispositivo, en una base SQLite y en DataStore. La app no pide permiso de internet, no envía datos a ningún servicio y no requiere registro. *Borrar todos los datos* en Ajustes elimina todo y restablece las preferencias.
 
-## Workarounds de build
+## Estado y próximos pasos
 
-`app/build.gradle.kts` incluye dos workarounds necesarios para SQLDelight 2.x + KSP con Gradle 9.2.1:
+La app es funcional: registro, cuentas, métricas, historial, reinicio y borrado de datos están implementados y cubiertos por pruebas unitarias.
 
-```kotlin
-// 1. Sourceset manual apuntando al output de SQLDelight
-sourceSets {
-    getByName("debug") {
-        java.srcDirs("${layout.buildDirectory.get()}/generated/sqldelight/code/FlowTaDatabase/debug")
-    }
-}
-
-// 2. Dependencia explícita de la tarea KSP sobre la generación de SQLDelight
-afterEvaluate {
-    tasks.named("kspDebugKotlin") {
-        dependsOn("generateDebugFlowTaDatabaseInterface")
-    }
-}
-```
-
-> **No actualizar AGP a 9.x** — SQLDelight 2.x depende de `BaseExtension` que fue removida en AGP 9.
-
----
-
-## Tests
-
-La infraestructura de testing está configurada pero los tests están pendientes de escritura:
-
-```kotlin
-// test dependencies ya incluidas en build.gradle.kts:
-testImplementation("junit:junit")
-testImplementation("io.mockk:mockk")
-testImplementation("app.cash.turbine:turbine")          // test de Flows
-testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
-testImplementation("app.cash.sqldelight:sqlite-driver") // DB en memoria para tests
-```
-
-Los use cases (un método `invoke` por clase) son los candidatos ideales para tests unitarios.
-
----
-
-## Ícono
-
-Símbolo **$** dorado 3D sobre fondo negro. Generado en todas las densidades estándar:
-
-| Directorio | Tamaño |
-|---|---|
-| `mipmap-mdpi` | 48×48 px |
-| `mipmap-hdpi` | 72×72 px |
-| `mipmap-xhdpi` | 96×96 px |
-| `mipmap-xxhdpi` | 144×144 px |
-| `mipmap-xxxhdpi` | 192×192 px |
-
-Ícono adaptativo (API 26+): foreground PNG 432×432 + background negro `#000000`.
-
----
-
-## Versión
-
-| Campo | Valor |
-|---|---|
-| `versionName` | 1.0.0 |
-| `versionCode` | 1 |
-| `minSdk` | 29 (Android 10) |
-| `targetSdk` | 35 (Android 15) |
-| `packageName` | `com.j4x.flowta` |
-
----
-
-## Licencia
-
-Proyecto privado — todos los derechos reservados.
+- **Metas de ahorro:** el modelo de datos y los repositorios existen, pero la pantalla `GoalsScreen` es todavía un marcador de posición.
+- **Integración con MiCuadre:** está planificada y aún no se ha implementado.
+- **Pruebas instrumentadas:** no hay `androidTestImplementation` configurado.
