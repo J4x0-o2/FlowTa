@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
@@ -27,8 +26,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.j4x.flowta.core.presentation.LocalCurrencyCode
+import com.j4x.flowta.core.presentation.components.AmountInput
+import com.j4x.flowta.core.presentation.format.parseAmount
 import com.j4x.flowta.feature.accounts.domain.model.AccountType
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,6 +45,10 @@ fun NewAccountBottomSheet(
     var balanceText by remember { mutableStateOf("") }
     var metaText by remember { mutableStateOf("") }
     var typeExpanded by remember { mutableStateOf(false) }
+    val currencyCode = LocalCurrencyCode.current
+    val showMeta = selectedType == AccountType.SAVINGS
+    val balance = parseAmount(balanceText, currencyCode)
+    val meta = parseAmount(metaText, currencyCode)
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -111,38 +116,33 @@ fun NewAccountBottomSheet(
             // Saldo inicial
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text("Saldo inicial", style = MaterialTheme.typography.labelMedium)
-                OutlinedTextField(
+                AmountInput(
                     value = balanceText,
                     onValueChange = { balanceText = it },
-                    placeholder = { Text("0") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    previewLabel = "Saldo",
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
 
             // Meta (solo SAVINGS)
-            if (selectedType == AccountType.SAVINGS) {
+            if (showMeta) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text("Meta (opcional)", style = MaterialTheme.typography.labelMedium)
-                    OutlinedTextField(
+                    AmountInput(
                         value = metaText,
                         onValueChange = { metaText = it },
-                        placeholder = { Text("Monto objetivo") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
+                        placeholder = "Monto objetivo",
+                        previewLabel = "Meta",
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
 
             Button(
                 onClick = {
-                    val balance = balanceText.toDoubleOrNull() ?: 0.0
-                    val meta = metaText.toDoubleOrNull()?.takeIf { it > 0 }
-                    onConfirm(name.trim(), selectedType.name, balance, meta)
+                    onConfirm(name.trim(), selectedType.name, balance ?: 0.0, meta?.takeIf { it > 0 })
                 },
-                enabled = name.trim().isNotEmpty(),
+                enabled = name.trim().isNotEmpty() && balance != null && (!showMeta || meta != null),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Crear Cuenta")

@@ -55,7 +55,9 @@ import com.j4x.flowta.core.presentation.theme.Indigo500
 import com.j4x.flowta.core.presentation.theme.IncomeGreen
 import com.j4x.flowta.feature.accounts.domain.model.AccountType
 import com.j4x.flowta.feature.transactions.presentation.TransactionDetailBottomSheet
+import com.j4x.flowta.core.presentation.components.AmountInput
 import com.j4x.flowta.core.presentation.format.Formatters
+import com.j4x.flowta.core.presentation.format.parseAmount
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -203,7 +205,7 @@ private fun ResetAccountDialogContent(
     onDismiss: () -> Unit
 ) {
     var amountText by remember { mutableStateOf("") }
-    val startingBalance = parseStartingBalance(amountText, currencyCode)
+    val startingBalance = parseAmount(amountText, currencyCode)
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -214,22 +216,12 @@ private fun ResetAccountDialogContent(
                     "Se borrarán $movementCount movimientos de esta cuenta " +
                         "(ingresos, gastos y transferencias). Esta acción no se puede deshacer."
                 )
-                OutlinedTextField(
-                    value           = amountText,
-                    onValueChange   = { amountText = it },
-                    label           = { Text("Saldo inicial") },
-                    placeholder     = { Text("0") },
-                    prefix          = { Text(currencySymbol) },
-                    isError         = startingBalance == null,
-                    supportingText  = {
-                        Text(
-                            if (startingBalance == null) "Monto no válido o ambiguo"
-                            else "Saldo: ${startingBalance.toBalanceString(currencySymbol, currencyCode)}"
-                        )
-                    },
-                    singleLine      = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier        = Modifier.fillMaxWidth()
+                AmountInput(
+                    value         = amountText,
+                    onValueChange = { amountText = it },
+                    label         = "Saldo inicial",
+                    previewLabel  = "Saldo",
+                    modifier      = Modifier.fillMaxWidth()
                 )
             }
         },

@@ -41,9 +41,10 @@ delete/reset UI; `AccountIntent.DeleteAccount` exists but no screen dispatches i
 - [x] T2 Reset everything: queries + `ResetAllDataUseCase` (DB + DataStore + WorkManager + reseed) + Settings UI; tests.
 - [x] T3 Emulator check of both flows.
 - [x] T4 Review follow-ups (R3 findings: starting-balance thousands, atomic seed, best-effort reset-all, order assertion, ticker zone change).
+- [x] T5 One shared currency-aware amount parser for every amount input (typing "5.000" in COP saved $5).
 
 ## Route per task
-- T1–T4: delegated direct (writer trigger: 2+ non-trivial files).
+- T1–T5: delegated direct (writer trigger: 2+ non-trivial files).
 
 ## Delivery
 - Branch `feat/account-reset`, based on `feat/history-weekly-monthly` (unmerged).
@@ -114,6 +115,15 @@ delete/reset UI; `AccountIntent.DeleteAccount` exists but no screen dispatches i
 - Verification: `./gradlew testDebugUnitTest assembleDebug`: BUILD SUCCESSFUL, 96 tests, 0 failures.
 - Emulator (Pixel_6): created "Banco" ($1,000), ⋮ > Reiniciar cuenta, typed `5.000`: dialog showed "Saldo: $5,000"; confirmed; account header
   showed $5,000. No FATAL / AndroidRuntime entries. Screenshots (scratchpad): `fix-balance-dialog.png`, `fix-balance-after.png`.
+
+### T5 Shared amount parser in every input (route: delegated direct writer; strict TDD, runner `./gradlew testDebugUnitTest`)
+- Bug: only the starting-balance dialog parsed by currency; the other inputs used a bare `toDoubleOrNull()` ("5.000" in COP saved $5).
+- `parseStartingBalance` moved to `core/presentation/format/AmountParser.kt` as `parseAmount(text, CurrencyCode)` (same rules/cases; its tests moved to `AmountParserTest`).
+- New reusable `core/presentation/components/AmountInput.kt`: text field + preview ("Monto: $5,000" / "Saldo: ...") or "Monto no válido o ambiguo"; follows the reactive `LocalCurrencyCode`/`LocalCurrencySymbol`; Decimal keyboard kept.
+- Inputs covered: AddTransaction sheet amount (ingreso, gasto, transferencia share one field; `AddTransactionState.parsedAmount/amountInvalid/canSubmit`, `SetCurrency` intent fed from `LocalCurrencyCode`, preserved across tab change/reset; ViewModel submits the parsed amount),
+  NewAccountBottomSheet initial balance and savings meta (create disabled while invalid), reset-account starting-balance dialog. Goals: `GoalsScreen` is a stub with no amount input today (nothing to change); any future goal input must use `AmountInput`/`parseAmount`.
+- RED: `AmountParserTest` (6) + `AddTransactionViewModelTest` (6 of 7) failed with `NotImplementedError` against a `TODO()` parser (12 failed of 103). GREEN: 103 tests, 0 failures. `./gradlew testDebugUnitTest assembleDebug`: BUILD SUCCESSFUL.
+- Emulator (Pixel_6, cold-booted without wipe because `pm install` hung on the snapshot-restored guest): expense `5.000` showed "Monto: $5,000"; submitted; feed "-$5,000", balance $0 (was $5,000); new account "Ahorro" with `1.000.000` showed "Saldo: $1,000,000" and the account card/capital show $1,000,000. No FATAL / AndroidRuntime for com.j4x.flowta. Screenshots (scratchpad): `fix-amount-sheet.png`, `fix-amount-after.png`.
 
 ## Next step
 Delivery strategy (ask-on-risk) before any PR; ~600 authored lines in total, so a chain decision applies.

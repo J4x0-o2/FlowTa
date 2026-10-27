@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -37,6 +36,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,8 +46,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.j4x.flowta.core.presentation.LocalCurrencyCode
+import com.j4x.flowta.core.presentation.components.AmountInput
 import com.j4x.flowta.core.presentation.theme.ExpenseRed
 import com.j4x.flowta.core.presentation.theme.Indigo500
 import com.j4x.flowta.core.presentation.theme.IncomeGreen
@@ -59,6 +60,9 @@ fun NewTransactionBottomSheet(
     onIntent: (AddTransactionIntent) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val currencyCode = LocalCurrencyCode.current
+    LaunchedEffect(currencyCode) { onIntent(AddTransactionIntent.SetCurrency(currencyCode)) }
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -107,15 +111,11 @@ fun NewTransactionBottomSheet(
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
-                OutlinedTextField(
+                AmountInput(
                     value = state.amountText,
                     onValueChange = { onIntent(AddTransactionIntent.SetAmount(it)) },
-                    placeholder = {
-                        Text("0.00", style = MaterialTheme.typography.headlineMedium)
-                    },
+                    placeholder = "0",
                     textStyle = MaterialTheme.typography.headlineMedium,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -128,7 +128,7 @@ fun NewTransactionBottomSheet(
 
             Button(
                 onClick = { onIntent(AddTransactionIntent.Submit) },
-                enabled = isFormValid(state) && !state.isSubmitting,
+                enabled = state.canSubmit && !state.isSubmitting,
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = Indigo500)
             ) {
@@ -341,15 +341,5 @@ private fun TabButton(
                 maxLines = 1
             )
         }
-    }
-}
-
-private fun isFormValid(state: AddTransactionState): Boolean {
-    val amount = state.amountText.toDoubleOrNull() ?: return false
-    if (amount <= 0) return false
-    return when (state.activeTab) {
-        TransactionTab.INCOME -> state.selectedTypeId != null && state.selectedAccountId != null
-        TransactionTab.EXPENSE -> state.selectedTypeId != null && state.selectedAccountId != null
-        TransactionTab.TRANSFER -> state.selectedFromAccountId != null && state.selectedToAccountId != null
     }
 }

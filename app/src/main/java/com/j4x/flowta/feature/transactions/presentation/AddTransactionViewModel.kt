@@ -57,6 +57,7 @@ class AddTransactionViewModel @Inject constructor(
             is AddTransactionIntent.SelectTab -> _state.update { s ->
                 AddTransactionState(
                     activeTab = intent.tab,
+                    currencyCode = s.currencyCode,
                     accounts = s.accounts,
                     incomeTypes = s.incomeTypes,
                     expenseTypes = s.expenseTypes,
@@ -64,6 +65,8 @@ class AddTransactionViewModel @Inject constructor(
                     incomeSourceTypes = s.incomeSourceTypes
                 )
             }
+            is AddTransactionIntent.SetCurrency ->
+                _state.update { it.copy(currencyCode = intent.code) }
             is AddTransactionIntent.SetAmount ->
                 _state.update { it.copy(amountText = intent.text) }
             is AddTransactionIntent.SelectType ->
@@ -83,6 +86,7 @@ class AddTransactionViewModel @Inject constructor(
             is AddTransactionIntent.Submit -> handleSubmit()
             is AddTransactionIntent.Reset -> _state.update { s ->
                 AddTransactionState(
+                    currencyCode = s.currencyCode,
                     accounts = s.accounts,
                     incomeTypes = s.incomeTypes,
                     expenseTypes = s.expenseTypes,
@@ -95,7 +99,8 @@ class AddTransactionViewModel @Inject constructor(
 
     private fun handleSubmit() {
         val s = _state.value
-        val amount = s.amountText.toDoubleOrNull()?.takeIf { it > 0 } ?: return
+        if (!s.canSubmit || s.isSubmitting) return
+        val amount = s.parsedAmount ?: return
         _state.update { it.copy(isSubmitting = true) }
 
         viewModelScope.launch {
