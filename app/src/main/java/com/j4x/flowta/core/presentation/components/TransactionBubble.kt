@@ -37,13 +37,9 @@ import androidx.compose.ui.unit.dp
 import com.j4x.flowta.core.domain.model.CurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencySymbol
-import com.j4x.flowta.core.presentation.theme.ExpenseBubble
-import com.j4x.flowta.core.presentation.theme.ExpenseRed
-import com.j4x.flowta.core.presentation.theme.IncomeBubble
-import com.j4x.flowta.core.presentation.theme.IncomeGreen
-import com.j4x.flowta.core.presentation.theme.Indigo200
-import com.j4x.flowta.core.presentation.theme.TransferBubble
 import com.j4x.flowta.core.presentation.format.Formatters
+import com.j4x.flowta.core.presentation.theme.LocalDarkTheme
+import com.j4x.flowta.core.presentation.theme.bubbleColors
 
 @Composable
 fun TransactionBubble(
@@ -60,16 +56,9 @@ fun TransactionBubble(
     val isIncome   = flowType == "INCOME"
     val isTransfer = flowType == "TRANSFER"
 
-    val bubbleColor = when {
-        isTransfer -> TransferBubble
-        isIncome   -> IncomeBubble
-        else       -> ExpenseBubble
-    }
-    val amountColor = when {
-        isTransfer -> Indigo200
-        isIncome   -> IncomeGreen
-        else       -> ExpenseRed
-    }
+    val colors      = bubbleColors(flowType, LocalDarkTheme.current)
+    val bubbleColor = colors.container
+    val amountColor = colors.content
     val alignment = when {
         isTransfer -> Arrangement.Center
         isIncome   -> Arrangement.End
@@ -146,7 +135,7 @@ fun TransactionBubble(
                     Text(
                         text  = createdAt.toTransactionDate(),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        color = colors.date
                     )
                 }
             }

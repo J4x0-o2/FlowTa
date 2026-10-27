@@ -10,9 +10,14 @@ val Indigo200   = Color(0xFF9FA8DA)
 // Semantic
 val IncomeGreen   = Color(0xFF2ECC71)
 val ExpenseRed    = Color(0xFFE74C3C)
-val IncomeBubble  = Color(0xFF1B5E20)
-val ExpenseBubble = Color(0xFFB71C1C)
-val TransferBubble = Color(0xFF1A237E)
+
+// Transaction bubbles: soft tinted container + strong same-hue text (all >= 4.5:1)
+val IncomeBubbleLight   = Color(0xFFE3F5EA); val IncomeBubbleTextLight   = Color(0xFF14632F); val IncomeBubbleDateLight   = Color(0xFF2E6B45)
+val ExpenseBubbleLight  = Color(0xFFFCE8E6); val ExpenseBubbleTextLight  = Color(0xFFA3261B); val ExpenseBubbleDateLight  = Color(0xFF8A3A33)
+val TransferBubbleLight = Color(0xFFE8EAF6); val TransferBubbleTextLight = Color(0xFF283593); val TransferBubbleDateLight = Color(0xFF3F4A8F)
+val IncomeBubbleDark    = Color(0xFF16301F); val IncomeBubbleTextDark    = Color(0xFF7EE2A3); val IncomeBubbleDateDark    = Color(0xFF8FCFA8)
+val ExpenseBubbleDark   = Color(0xFF3A1A18); val ExpenseBubbleTextDark   = Color(0xFFFF9A8F); val ExpenseBubbleDateDark   = Color(0xFFE8A9A2)
+val TransferBubbleDark  = Color(0xFF1E2240); val TransferBubbleTextDark  = Color(0xFFAAB4F5); val TransferBubbleDateDark  = Color(0xFFA3ACE0)
 
 // Surfaces — dark
 val DarkBackground = Color(0xFF121212)
