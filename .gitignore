@@ -21,3 +21,6 @@ local.properties
 *.p12
 google-services.json
 keystore.properties
+
+# Claude Code local settings (machine-specific)
+.claude/settings.local.json
