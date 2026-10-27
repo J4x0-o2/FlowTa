@@ -37,9 +37,8 @@ import androidx.compose.ui.unit.dp
 import com.j4x.flowta.core.domain.model.CurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencySymbol
-import com.j4x.flowta.core.presentation.theme.ExpenseRed
 import com.j4x.flowta.core.presentation.theme.Indigo500
-import com.j4x.flowta.core.presentation.theme.IncomeGreen
+import com.j4x.flowta.core.presentation.theme.flowColors
 import com.j4x.flowta.feature.transactions.domain.model.Transaction
 import com.j4x.flowta.core.presentation.format.Formatters
 
@@ -52,7 +51,7 @@ fun TransactionDetailBottomSheet(
     val currencySymbol = LocalCurrencySymbol.current
     val currencyCode   = LocalCurrencyCode.current
     val isIncome  = transaction.flowType == "INCOME"
-    val flowColor = if (isIncome) IncomeGreen else ExpenseRed
+    val flowColor = if (isIncome) flowColors.incomeText else flowColors.expenseText
     val flowIcon  = if (isIncome) Icons.AutoMirrored.Filled.CallReceived else Icons.AutoMirrored.Filled.CallMade
     val flowLabel = if (isIncome) "Ingreso" else "Gasto"
 

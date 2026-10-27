@@ -8,8 +8,13 @@ val Indigo700   = Color(0xFF303F9F)
 val Indigo200   = Color(0xFF9FA8DA)
 
 // Semantic
-val IncomeGreen   = Color(0xFF2ECC71)
-val ExpenseRed    = Color(0xFFE74C3C)
+// Text tokens (on surfaces, >= 4.5:1), fill tokens (bars/dots, >= 3:1), solid tokens (filled tab with onSolid label)
+val IncomeTextLight  = Color(0xFF1F7A4C); val IncomeFillLight  = Color(0xFF3A9564); val IncomeSolidLight = Color(0xFF1F7A4C)
+val ExpenseTextLight = Color(0xFFC0392B); val ExpenseFillLight = Color(0xFFD9534F); val ExpenseSolidLight = Color(0xFFC0392B)
+val IncomeTextDark   = Color(0xFF6FCF97); val IncomeFillDark   = Color(0xFF4CAF7A); val IncomeSolidDark  = Color(0xFF4CAF7A)
+val ExpenseTextDark  = Color(0xFFFF8A80); val ExpenseFillDark  = Color(0xFFE8665C); val ExpenseSolidDark = Color(0xFFE8665C)
+val OnSolidLight = Color(0xFFFFFFFF)
+val OnSolidDark  = Color(0xFF121212)
 
 // Transaction bubbles: soft tinted container + strong same-hue text (all >= 4.5:1)
 val IncomeBubbleLight   = Color(0xFFE3F5EA); val IncomeBubbleTextLight   = Color(0xFF14632F); val IncomeBubbleDateLight   = Color(0xFF2E6B45)

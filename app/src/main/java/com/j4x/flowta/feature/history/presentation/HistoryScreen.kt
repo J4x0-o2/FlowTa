@@ -45,8 +45,7 @@ import androidx.navigation.NavController
 import com.j4x.flowta.core.presentation.LocalCurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencySymbol
 import com.j4x.flowta.core.presentation.navigation.Screen
-import com.j4x.flowta.core.presentation.theme.ExpenseRed
-import com.j4x.flowta.core.presentation.theme.IncomeGreen
+import com.j4x.flowta.core.presentation.theme.flowColors
 
 /** Year screen: year stepper, year totals and one card per month with movements. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -180,8 +179,8 @@ private fun YearStepper(year: YearHistoryModel, onPrevious: () -> Unit, onNext: 
 
 @Composable
 private fun netColor(net: Double): Color = when {
-    net > 0 -> IncomeGreen
-    net < 0 -> ExpenseRed
+    net > 0 -> flowColors.incomeText
+    net < 0 -> flowColors.expenseText
     else -> MaterialTheme.colorScheme.onSurface
 }
 
@@ -219,8 +218,8 @@ private fun Tile(label: String, value: Double, kind: TileKind, modifier: Modifie
     val symbol = LocalCurrencySymbol.current
     val code = LocalCurrencyCode.current
     val (text, color) = when (kind) {
-        TileKind.INCOME -> formatIncome(value, symbol, code) to IncomeGreen
-        TileKind.EXPENSE -> formatExpense(value, symbol, code) to ExpenseRed
+        TileKind.INCOME -> formatIncome(value, symbol, code) to flowColors.incomeText
+        TileKind.EXPENSE -> formatExpense(value, symbol, code) to flowColors.expenseText
         TileKind.COUNT -> value.toInt().toString() to MaterialTheme.colorScheme.onSurface
     }
     Column(
@@ -322,8 +321,8 @@ private fun PeriodBody(
                 maxLines = 1
             )
         }
-        Bar(incomeFraction, IncomeGreen)
-        Bar(expenseFraction, ExpenseRed)
+        Bar(incomeFraction, flowColors.incomeFill)
+        Bar(expenseFraction, flowColors.expenseFill)
         Text(
             "${formatIncome(income, symbol, code)} · ${formatExpense(expense, symbol, code)}",
             style = MaterialTheme.typography.labelMedium,

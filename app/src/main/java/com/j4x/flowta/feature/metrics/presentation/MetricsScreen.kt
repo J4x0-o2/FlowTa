@@ -45,12 +45,11 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.j4x.flowta.core.presentation.theme.ExpenseRed
 import com.j4x.flowta.core.presentation.theme.Indigo500
 import com.j4x.flowta.core.domain.model.CurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencySymbol
-import com.j4x.flowta.core.presentation.theme.IncomeGreen
+import com.j4x.flowta.core.presentation.theme.flowColors
 import com.j4x.flowta.feature.metrics.domain.model.CategoryExpense
 import com.j4x.flowta.feature.metrics.domain.model.DailyFlow
 import androidx.compose.foundation.Canvas
@@ -58,7 +57,7 @@ import androidx.compose.ui.graphics.drawscope.Fill
 import com.j4x.flowta.core.presentation.format.Formatters
 
 private val chartPalette = listOf(
-    Color(0xFFE74C3C), Color(0xFF3498DB), Color(0xFF2ECC71),
+    Color(0xFFE74C3C), Color(0xFF3498DB), Color(0xFF3A9564),
     Color(0xFFF39C12), Color(0xFF9B59B6), Color(0xFF1ABC9C),
     Color(0xFFE67E22), Color(0xFF34495E), Color(0xFF95A5A6)
 )
@@ -106,14 +105,14 @@ fun MetricsScreen(
                         SummaryCard(
                             label  = "Ingresos",
                             amount = state.totalIncome,
-                            color  = IncomeGreen,
+                            color  = flowColors.incomeText,
                             icon   = Icons.AutoMirrored.Filled.CallReceived,
                             modifier = Modifier.weight(1f)
                         )
                         SummaryCard(
                             label  = "Gastos",
                             amount = state.totalExpense,
-                            color  = ExpenseRed,
+                            color  = flowColors.expenseText,
                             icon   = Icons.AutoMirrored.Filled.CallMade,
                             modifier = Modifier.weight(1f)
                         )
@@ -133,8 +132,8 @@ fun MetricsScreen(
                             label  = "Flujo neto",
                             amount = state.netFlow,
                             color  = when {
-                                state.netFlow > 0 -> IncomeGreen
-                                state.netFlow < 0 -> ExpenseRed
+                                state.netFlow > 0 -> flowColors.incomeText
+                                state.netFlow < 0 -> flowColors.expenseText
                                 else              -> MaterialTheme.colorScheme.onSurface
                             },
                             icon   = Icons.AutoMirrored.Filled.TrendingDown,
@@ -267,6 +266,9 @@ private fun IncomeExpenseBarChart(dailyFlows: List<DailyFlow>) {
     val days     = chart.days
     val maxValue = chart.maxValue
 
+    val incomeFill  = flowColors.incomeFill
+    val expenseFill = flowColors.expenseFill
+
     Canvas(modifier = Modifier.fillMaxWidth().height(120.dp)) {
         val groupW  = size.width / days.size
         val barW    = (groupW * 0.32f).coerceAtLeast(4f)
@@ -280,7 +282,7 @@ private fun IncomeExpenseBarChart(dailyFlows: List<DailyFlow>) {
             if (income > 0) {
                 val h = income / maxValue * size.height
                 drawRect(
-                    color    = IncomeGreen,
+                    color    = incomeFill,
                     topLeft  = Offset(cx - barW - gap, size.height - h),
                     size     = Size(barW, h),
                     style    = Fill
@@ -289,7 +291,7 @@ private fun IncomeExpenseBarChart(dailyFlows: List<DailyFlow>) {
             if (expense > 0) {
                 val h = expense / maxValue * size.height
                 drawRect(
-                    color    = ExpenseRed,
+                    color    = expenseFill,
                     topLeft  = Offset(cx + gap, size.height - h),
                     size     = Size(barW, h),
                     style    = Fill
@@ -304,9 +306,9 @@ private fun IncomeExpenseBarChart(dailyFlows: List<DailyFlow>) {
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        LegendDot(color = IncomeGreen, label = "Ingresos")
+        LegendDot(color = flowColors.incomeFill, label = "Ingresos")
         Spacer(Modifier.width(16.dp))
-        LegendDot(color = ExpenseRed, label = "Gastos")
+        LegendDot(color = flowColors.expenseFill, label = "Gastos")
     }
 }
 

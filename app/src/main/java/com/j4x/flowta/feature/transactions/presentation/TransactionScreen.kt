@@ -39,8 +39,7 @@ import com.j4x.flowta.core.presentation.LocalCurrencySymbol
 import com.j4x.flowta.core.presentation.components.BottomInputBar
 import com.j4x.flowta.core.presentation.components.TransactionBubble
 import com.j4x.flowta.core.presentation.navigation.Screen
-import com.j4x.flowta.core.presentation.theme.ExpenseRed
-import com.j4x.flowta.core.presentation.theme.IncomeGreen
+import com.j4x.flowta.core.presentation.theme.flowColors
 import com.j4x.flowta.core.presentation.format.Formatters
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -91,8 +90,8 @@ fun TransactionScreen(
                         )
                         val balanceColor by animateColorAsState(
                             targetValue = when {
-                                state.balance > 0 -> IncomeGreen
-                                state.balance < 0 -> ExpenseRed
+                                state.balance > 0 -> flowColors.incomeText
+                                state.balance < 0 -> flowColors.expenseText
                                 else              -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                             },
                             animationSpec = tween(200),

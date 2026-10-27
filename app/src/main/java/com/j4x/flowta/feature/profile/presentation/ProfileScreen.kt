@@ -53,9 +53,8 @@ import com.j4x.flowta.core.domain.model.CurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencySymbol
 import com.j4x.flowta.core.presentation.navigation.Screen
-import com.j4x.flowta.core.presentation.theme.ExpenseRed
 import com.j4x.flowta.core.presentation.theme.Indigo500
-import com.j4x.flowta.core.presentation.theme.IncomeGreen
+import com.j4x.flowta.core.presentation.theme.flowColors
 import com.j4x.flowta.feature.accounts.presentation.AccountCard
 import com.j4x.flowta.feature.accounts.presentation.AccountEffect
 import com.j4x.flowta.feature.accounts.presentation.AccountIntent
@@ -194,7 +193,7 @@ fun ProfileScreen(navController: NavController) {
                 Surface(
                     onClick = { showLogoutDialog = true },
                     shape = RoundedCornerShape(12.dp),
-                    color = ExpenseRed.copy(alpha = 0.08f)
+                    color = flowColors.expenseText.copy(alpha = 0.08f)
                 ) {
                     Row(
                         modifier = Modifier
@@ -206,13 +205,13 @@ fun ProfileScreen(navController: NavController) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                             contentDescription = null,
-                            tint = ExpenseRed,
+                            tint = flowColors.expenseText,
                             modifier = Modifier.size(20.dp)
                         )
                         Text(
                             "Cerrar sesión",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = ExpenseRed
+                            color = flowColors.expenseText
                         )
                     }
                 }
@@ -234,7 +233,7 @@ fun ProfileScreen(navController: NavController) {
                         popUpTo(0) { inclusive = true }
                     }
                 }) {
-                    Text("Cerrar sesión", color = ExpenseRed)
+                    Text("Cerrar sesión", color = flowColors.expenseText)
                 }
             },
             dismissButton = {
@@ -276,7 +275,7 @@ fun ProfileScreen(navController: NavController) {
             title     = "Tipos de Ingreso",
             category  = "INCOME",
             types     = typesState.incomeTypes,
-            chipColor = IncomeGreen,
+            chipColor = flowColors.incomeText,
             onDismiss = { activeSheet = null },
             onAdd     = { name, cat -> typesViewModel.onIntent(TypesIntent.AddType(name, cat)) },
             onDelete  = { typesViewModel.onIntent(TypesIntent.DeleteType(it)) }
@@ -286,7 +285,7 @@ fun ProfileScreen(navController: NavController) {
             title     = "Tipos de Gasto",
             category  = "EXPENSE",
             types     = typesState.expenseTypes,
-            chipColor = ExpenseRed,
+            chipColor = flowColors.expenseText,
             onDismiss = { activeSheet = null },
             onAdd     = { name, cat -> typesViewModel.onIntent(TypesIntent.AddType(name, cat)) },
             onDelete  = { typesViewModel.onIntent(TypesIntent.DeleteType(it)) }
@@ -325,7 +324,7 @@ private fun CategoriesCard(
             CategorySection(
                 title     = "Tipos de Ingreso",
                 types     = incomeTypes,
-                chipColor = IncomeGreen,
+                chipColor = flowColors.incomeText,
                 onAdd     = onAddIncome,
                 onDelete  = onDelete
             )
@@ -333,7 +332,7 @@ private fun CategoriesCard(
             CategorySection(
                 title     = "Tipos de Gasto",
                 types     = expenseTypes,
-                chipColor = ExpenseRed,
+                chipColor = flowColors.expenseText,
                 onAdd     = onAddExpense,
                 onDelete  = onDelete
             )
@@ -412,8 +411,8 @@ private fun CapitalTotalSection(total: Double, accountCount: Int) {
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold,
             color = when {
-                total > 0 -> IncomeGreen
-                total < 0 -> ExpenseRed
+                total > 0 -> flowColors.incomeText
+                total < 0 -> flowColors.expenseText
                 else      -> MaterialTheme.colorScheme.onSurface
             }
         )

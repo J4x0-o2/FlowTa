@@ -50,9 +50,8 @@ import com.j4x.flowta.core.presentation.components.TransactionBubble
 import com.j4x.flowta.core.domain.model.CurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencySymbol
-import com.j4x.flowta.core.presentation.theme.ExpenseRed
 import com.j4x.flowta.core.presentation.theme.Indigo500
-import com.j4x.flowta.core.presentation.theme.IncomeGreen
+import com.j4x.flowta.core.presentation.theme.flowColors
 import com.j4x.flowta.feature.accounts.domain.model.AccountType
 import com.j4x.flowta.feature.transactions.presentation.TransactionDetailBottomSheet
 import com.j4x.flowta.core.presentation.components.AmountInput
@@ -101,8 +100,8 @@ fun AccountDetailScreen(
                                 text  = balance.toBalanceString(currencySymbol, currencyCode),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = when {
-                                    balance > 0 -> IncomeGreen
-                                    balance < 0 -> ExpenseRed
+                                    balance > 0 -> flowColors.incomeText
+                                    balance < 0 -> flowColors.expenseText
                                     else        -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 }
                             )

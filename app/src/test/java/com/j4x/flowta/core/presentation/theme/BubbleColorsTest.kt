@@ -29,4 +29,21 @@ class BubbleColorsTest {
             assertTrue("$flow dark=$dark date", contrast(c.container, c.date) >= 4.5f)
         }
     }
+
+    @Test
+    fun flowColorsMeetContrastOnAppSurfaces() {
+        val light = listOf(LightBackground, LightSurface, LightSurface2) to false
+        val dark = listOf(DarkBackground, DarkSurface, DarkSurface2) to true
+        for ((surfaces, isDark) in listOf(light, dark)) {
+            val f = flowColorsFor(isDark)
+            for (s in surfaces) {
+                assertTrue("incomeText dark=$isDark", contrast(s, f.incomeText) >= 4.5f)
+                assertTrue("expenseText dark=$isDark", contrast(s, f.expenseText) >= 4.5f)
+                assertTrue("incomeFill dark=$isDark", contrast(s, f.incomeFill) >= 3f)
+                assertTrue("expenseFill dark=$isDark", contrast(s, f.expenseFill) >= 3f)
+            }
+            assertTrue("incomeSolid label", contrast(f.incomeSolid, f.onSolid) >= 4.5f)
+            assertTrue("expenseSolid label", contrast(f.expenseSolid, f.onSolid) >= 4.5f)
+        }
+    }
 }

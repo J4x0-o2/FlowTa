@@ -49,9 +49,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.j4x.flowta.core.presentation.LocalCurrencyCode
 import com.j4x.flowta.core.presentation.components.AmountInput
-import com.j4x.flowta.core.presentation.theme.ExpenseRed
 import com.j4x.flowta.core.presentation.theme.Indigo500
-import com.j4x.flowta.core.presentation.theme.IncomeGreen
+import com.j4x.flowta.core.presentation.theme.flowColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -300,11 +299,13 @@ private fun TabButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val fc = flowColors
     val color = when (tab) {
-        TransactionTab.INCOME -> IncomeGreen
-        TransactionTab.EXPENSE -> ExpenseRed
+        TransactionTab.INCOME -> fc.incomeSolid
+        TransactionTab.EXPENSE -> fc.expenseSolid
         TransactionTab.TRANSFER -> Indigo500
     }
+    val onColor = if (tab == TransactionTab.TRANSFER) Color.White else fc.onSolid
     val icon = when (tab) {
         TransactionTab.INCOME -> Icons.AutoMirrored.Filled.CallReceived
         TransactionTab.EXPENSE -> Icons.AutoMirrored.Filled.CallMade
@@ -330,13 +331,13 @@ private fun TabButton(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = if (isActive) Color.White else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                tint = if (isActive) onColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 modifier = Modifier.size(14.dp)
             )
             Spacer(Modifier.width(4.dp))
             Text(
                 text = label,
-                color = if (isActive) Color.White else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                color = if (isActive) onColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 style = MaterialTheme.typography.labelSmall,
                 maxLines = 1
             )
