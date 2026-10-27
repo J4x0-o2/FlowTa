@@ -1,10 +1,8 @@
 package com.j4x.flowta.feature.types.presentation
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.j4x.flowta.feature.types.domain.repository.TransactionTypeRepository
-import com.j4x.flowta.feature.types.domain.usecase.SeedDefaultTypesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,8 +15,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TypesViewModel @Inject constructor(
-    private val repository: TransactionTypeRepository,
-    private val seedDefaultTypes: SeedDefaultTypesUseCase
+    private val repository: TransactionTypeRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TypesState())
@@ -32,11 +29,6 @@ class TypesViewModel @Inject constructor(
         ) { income, expense, transfer ->
             _state.update { it.copy(incomeTypes = income, expenseTypes = expense, transferTypes = transfer) }
         }.launchIn(viewModelScope)
-
-        viewModelScope.launch {
-            // Best effort: a failed seed is retried on the next launch (see FlowTaApp).
-            seedDefaultTypes().onFailure { Log.w("TypesViewModel", "Default types seeding failed", it) }
-        }
     }
 
     fun onIntent(intent: TypesIntent) {

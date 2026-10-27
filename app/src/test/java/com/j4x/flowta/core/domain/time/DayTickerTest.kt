@@ -118,6 +118,7 @@ class DayTickerTest {
         DayTicker(clock, signal).days().test {
             assertEquals(LocalDate.of(2026, 10, 25), awaitItem())
             signal.source.emit(Unit)
+            testScheduler.runCurrent()
             expectNoEvents()
             cancelAndIgnoreRemainingEvents()
         }

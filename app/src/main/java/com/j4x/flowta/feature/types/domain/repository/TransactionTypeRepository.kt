@@ -7,7 +7,10 @@ interface TransactionTypeRepository {
     fun getAll(): Flow<List<TransactionType>>
     fun getByCategory(category: String): Flow<List<TransactionType>>
     suspend fun add(name: String, category: String): Result<Unit>
-    /** Inserts every (name, category) pair in ONE transaction: all or nothing. */
-    suspend fun addAll(types: List<Pair<String, String>>): Result<Unit>
+    /**
+     * Inserts every (name, category) pair only if no type exists, checking and inserting inside ONE
+     * transaction: all or nothing, and overlapping callers cannot both seed.
+     */
+    suspend fun seedIfEmpty(types: List<Pair<String, String>>): Result<Unit>
     suspend fun delete(id: String): Result<Unit>
 }

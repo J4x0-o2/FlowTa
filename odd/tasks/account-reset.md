@@ -125,5 +125,16 @@ delete/reset UI; `AccountIntent.DeleteAccount` exists but no screen dispatches i
 - RED: `AmountParserTest` (6) + `AddTransactionViewModelTest` (6 of 7) failed with `NotImplementedError` against a `TODO()` parser (12 failed of 103). GREEN: 103 tests, 0 failures. `./gradlew testDebugUnitTest assembleDebug`: BUILD SUCCESSFUL.
 - Emulator (Pixel_6, cold-booted without wipe because `pm install` hung on the snapshot-restored guest): expense `5.000` showed "Monto: $5,000"; submitted; feed "-$5,000", balance $0 (was $5,000); new account "Ahorro" with `1.000.000` showed "Saldo: $1,000,000" and the account card/capital show $1,000,000. No FATAL / AndroidRuntime for com.j4x.flowta. Screenshots (scratchpad): `fix-amount-sheet.png`, `fix-amount-after.png`.
 
+### T6 Review follow-ups (round 2) (route: delegated direct writer; strict TDD, runner `./gradlew testDebugUnitTest`)
+- R3-concurrent-seed-duplicates. `TransactionTypeRepository.addAll` replaced by `seedIfEmpty(defaults)`: new SQLDelight query `countAll`; the count and the inserts
+  run inside ONE `transaction {}`. `SeedDefaultTypesUseCase` also serializes callers with a process-wide `Mutex` (needed for the JVM driver, which shares one
+  connection across threads; on Android the SQLite transaction already serializes). `TypesViewModel` no longer seeds (app start seeds; reset-all re-seeds);
+  the Profile list is reactive, so it fills in when the seed lands. RED: `seed_whenCallersOverlapOnAnEmptyDatabase_insertsTheDefaultsExactlyOnce`
+  (8 concurrent callers x 30 rounds) failed against the old check-outside-transaction code (AssertionError, duplicated rows). GREEN after the change.
+- R3-reset-wipe-throw-escapes-result. `ResetAllDataUseCase` wraps `wipeAll()`: a throw becomes `Result.failure` (CancellationException rethrown), no other step runs.
+  RED: `resetAll_whenWipeThrows_returnsFailure_andRunsNoOtherStep` threw out of the use case. GREEN; plus a cancellation-propagation test.
+- R3-ticker-noevents-possibly-vacuous. `DayTickerTest` now calls `testScheduler.runCurrent()` before `expectNoEvents()`. Mutation check: with
+  `distinctUntilChanged()` removed from `DayTicker`, `days_doesNotRepeatTheSameDate_whenTheSignalFiresWithoutAChange` FAILED (6 tests, 1 failed); restored, 6/6 pass.
+
 ## Next step
 Delivery strategy (ask-on-risk) before any PR; ~600 authored lines in total, so a chain decision applies.

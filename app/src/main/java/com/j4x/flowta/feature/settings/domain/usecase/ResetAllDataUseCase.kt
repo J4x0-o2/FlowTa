@@ -20,7 +20,14 @@ class ResetAllDataUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(): Result<Unit> {
         // If the wipe fails nothing else is touched and the caller sees the failure.
-        appData.wipeAll().onFailure { return Result.failure(it) }
+        val wipe = try {
+            appData.wipeAll()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+        wipe.onFailure { return Result.failure(it) }
 
         // The wipe is committed: the reset has happened, so the remaining steps are best effort and
         // never turn the result into a failure. Default types are re-seeded on the next launch

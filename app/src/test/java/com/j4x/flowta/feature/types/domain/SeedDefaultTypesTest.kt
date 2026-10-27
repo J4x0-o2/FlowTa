@@ -7,6 +7,10 @@ import com.j4x.flowta.feature.types.domain.usecase.SeedDefaultTypesUseCase
 import io.mockk.every
 import io.mockk.spyk
 import io.mockk.unmockkAll
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -69,5 +73,22 @@ class SeedDefaultTypesTest {
         val retry = SeedDefaultTypesUseCase(TransactionTypeRepositoryImpl(db.transactionTypeQueries))()
         assertTrue(retry.isSuccess)
         assertEquals(23, typeCount())
+    }
+
+    @Test
+    fun seed_whenCallersOverlapOnAnEmptyDatabase_insertsTheDefaultsExactlyOnce() {
+        repeat(30) { round ->
+            db.transactionTypeQueries.deleteAll()
+            val results = runBlocking {
+                (1..8).map {
+                    async(Dispatchers.Default) {
+                        SeedDefaultTypesUseCase(TransactionTypeRepositoryImpl(db.transactionTypeQueries))()
+                    }
+                }.awaitAll()
+            }
+
+            assertTrue("round $round", results.all { it.isSuccess })
+            assertEquals("round $round", 23, typeCount())
+        }
     }
 }

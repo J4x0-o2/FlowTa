@@ -13,6 +13,9 @@ SELECT * FROM transaction_type ORDER BY name ASC;
 selectByCategory:
 SELECT * FROM transaction_type WHERE category = ? ORDER BY name ASC;
 
+countAll:
+SELECT COUNT(*) FROM transaction_type;
+
 insert:
 INSERT INTO transaction_type(id, name, category, created_at) VALUES(?, ?, ?, ?);
 

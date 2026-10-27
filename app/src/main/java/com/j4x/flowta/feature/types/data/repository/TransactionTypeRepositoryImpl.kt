@@ -31,11 +31,12 @@ class TransactionTypeRepositoryImpl @Inject constructor(
             }
         }
 
-    override suspend fun addAll(types: List<Pair<String, String>>): Result<Unit> =
+    override suspend fun seedIfEmpty(types: List<Pair<String, String>>): Result<Unit> =
         withContext(Dispatchers.IO) {
             try {
                 val now = System.currentTimeMillis()
                 queries.transaction {
+                    if (queries.countAll().executeAsOne() > 0L) return@transaction
                     types.forEach { (name, category) ->
                         queries.insert(UUID.randomUUID().toString(), name, category, now)
                     }

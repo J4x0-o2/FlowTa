@@ -55,9 +55,9 @@ class ResetAllDataTest {
         private val events: MutableList<String>,
         var failSeed: Boolean = false
     ) : TransactionTypeRepository by real {
-        override suspend fun addAll(types: List<Pair<String, String>>): Result<Unit> {
+        override suspend fun seedIfEmpty(types: List<Pair<String, String>>): Result<Unit> {
             events += "seed"
-            return if (failSeed) Result.failure(IllegalStateException("seed boom")) else real.addAll(types)
+            return if (failSeed) Result.failure(IllegalStateException("seed boom")) else real.seedIfEmpty(types)
         }
     }
 
@@ -177,6 +177,33 @@ class ResetAllDataTest {
         useCase().invoke().getOrThrow()
 
         assertEquals(listOf("wipe", "seed", "settings.clear", "work.cancel"), events)
+    }
+
+    @Test
+    fun resetAll_whenWipeThrows_returnsFailure_andRunsNoOtherStep() = runTest {
+        val throwing = object : AppDataRepository {
+            override suspend fun wipeAll(): Result<Unit> { events += "wipe"; throw IllegalStateException("boom") }
+        }
+
+        val result = useCase(throwing).invoke()
+
+        assertTrue(result.isFailure)
+        assertEquals("boom", result.exceptionOrNull()?.message)
+        assertEquals(listOf("wipe"), events)
+    }
+
+    @Test
+    fun resetAll_whenWipeIsCancelled_propagatesCancellation() = runTest {
+        val cancelling = object : AppDataRepository {
+            override suspend fun wipeAll(): Result<Unit> = throw CancellationException("cancelled")
+        }
+
+        try {
+            useCase(cancelling).invoke()
+            org.junit.Assert.fail("expected CancellationException")
+        } catch (e: CancellationException) {
+            assertEquals(0, settings.clearCalls)
+        }
     }
 
     @Test
