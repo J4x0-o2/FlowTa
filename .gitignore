@@ -24,3 +24,7 @@ keystore.properties
 
 # Claude Code local settings (machine-specific)
 .claude/settings.local.json
+
+# Private project notes (local only)
+CLAUDE.md
+PROYECTO.md
