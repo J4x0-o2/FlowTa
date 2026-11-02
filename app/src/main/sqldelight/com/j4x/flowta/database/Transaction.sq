@@ -44,6 +44,13 @@ insert:
 INSERT INTO user_transaction(id, amount, flow_type, transaction_type_id, source_type_id, account_id, note, created_at)
 VALUES(?, ?, ?, ?, ?, ?, ?, ?);
 
+insertExternal:
+INSERT INTO user_transaction(id, amount, flow_type, transaction_type_id, source_type_id, account_id, note, created_at, source_app, external_id)
+VALUES(?, ?, 'INCOME', ?, NULL, ?, ?, ?, ?, ?);
+
+countBySourceExternal:
+SELECT COUNT(*) FROM user_transaction WHERE source_app = ? AND external_id = ?;
+
 delete:
 DELETE FROM user_transaction WHERE id = ?;
 

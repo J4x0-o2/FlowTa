@@ -82,6 +82,7 @@ class ResetAllDataTest {
         db.internalTransferQueries.insert("x1", "a", "b", null, 5.0, null, 1)
         db.goalQueries.insert("g1", "Trip", 1000.0, 200.0, "SAVINGS", "MONTHLY", null, 1)
         db.goalContributionQueries.insert("k1", "g1", "a", 200.0, null, 1)
+        db.integrationLinkQueries.upsert("com.micuadre", "custom", "a", "b", 1)
     }
 
     @After
@@ -93,7 +94,8 @@ class ResetAllDataTest {
         transferQueries     = db.internalTransferQueries,
         typeQueries         = db.transactionTypeQueries,
         goalQueries         = db.goalQueries,
-        contributionQueries = db.goalContributionQueries
+        contributionQueries = db.goalContributionQueries,
+        linkQueries         = db.integrationLinkQueries
     )
 
     private fun useCase(appData: AppDataRepository = RecordingAppData(appData(), events)) = ResetAllDataUseCase(
@@ -113,6 +115,7 @@ class ResetAllDataTest {
         assertTrue(db.goalQueries.selectAll().executeAsList().isEmpty())
         assertTrue(db.goalContributionQueries.selectByGoal("g1").executeAsList().isEmpty())
         assertTrue(db.transactionTypeQueries.selectAll().executeAsList().isEmpty())
+        assertTrue(db.integrationLinkQueries.selectBySource("com.micuadre").executeAsList().isEmpty())
     }
 
     @Test
@@ -129,6 +132,7 @@ class ResetAllDataTest {
         assertEquals(1, db.goalQueries.selectAll().executeAsList().size)
         assertEquals(1, db.goalContributionQueries.selectByGoal("g1").executeAsList().size)
         assertEquals(1, db.transactionTypeQueries.selectAll().executeAsList().size)
+        assertEquals(1, db.integrationLinkQueries.selectBySource("com.micuadre").executeAsList().size)
     }
 
     @Test
@@ -139,6 +143,7 @@ class ResetAllDataTest {
         assertTrue(db.transactionQueries.selectAll().executeAsList().isEmpty())
         assertTrue(db.internalTransferQueries.selectAll().executeAsList().isEmpty())
         assertTrue(db.goalQueries.selectAll().executeAsList().isEmpty())
+        assertTrue(db.integrationLinkQueries.selectBySource("com.micuadre").executeAsList().isEmpty())
 
         val types = db.transactionTypeQueries.selectAll().executeAsList()
         assertEquals(23, types.size)

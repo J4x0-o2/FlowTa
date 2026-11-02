@@ -84,11 +84,17 @@ Route per task is recorded as `[route: …]`.
       Evidence 2026-11-02: RED `table user_transaction has no column named source_app` (5/8 db tests);
       GREEN generateDebugFlowTaDatabaseSchema, verifySqlDelightMigration (~8 min, CPU-bound ObjectDiffer),
       testDebugUnitTest (114 tests), assembleDebug; parent re-ran the 8 db tests: green.
-- [ ] **F3 Record external income (domain + data)** — `RecordExternalIncomeUseCase` returning
+- [x] **F3 Record external income (domain + data)** — `RecordExternalIncomeUseCase` returning
       `Recorded | Duplicate | NotLinked | Invalid`; repository inserts with `created_at = occurredAt`,
       source columns and balance update atomically; duplicate detected by the unique key. Tests over
       the JVM sqlite driver: routes CASH/TRANSFER, duplicate no double balance, deleted account → NotLinked,
-      amount ≤ 0 → Invalid. [route: delegated]
+      amount ≤ 0 → Invalid. [route: delegated — 2+ non-trivial files]
+      Evidence 2026-11-02: new `feature/integration` (ExternalIncomeRepository with one
+      `transactionWithResult`: duplicate check → account/type resolution → insertExternal → balance;
+      IntegrationLinkRepository get/save/delete/observe). Reset-all wipe also clears integration_link.
+      RED: compile failure on the missing API (`Unresolved reference 'repository'`). GREEN:
+      testDebugUnitTest + assembleDebug; parent re-ran RecordExternalIncomeTest (11), ResetAllDataTest
+      (12), DatabaseSchemaTest (2): green. F2 follow-ups done (test renamed; blank ids → Invalid).
 - [ ] **F4 IntegrationProvider** — `call()`-only provider, `@EntryPoint` for the use case and link
       repository, manifest `<permission>` + `<provider>` (exported, guarded). Bundle ↔ domain mapping
       tested as pure functions. [route: delegated]
@@ -117,6 +123,8 @@ Route per task is recorded as `[route: …]`.
   the unique index only dedupes when BOTH source_app and external_id are non-null → F3 must reject
   external rows missing either.
 
+- 2026-11-02: F3 done.
+
 ## Next step
 
-F3 (record external income) → F4 → F5 → F6, then MiCuadre side.
+F4 (IntegrationProvider) → F5 → F6, then MiCuadre side.

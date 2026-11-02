@@ -6,6 +6,7 @@ import com.j4x.flowta.database.AccountQueries
 import com.j4x.flowta.database.FlowTaDatabase
 import com.j4x.flowta.database.GoalContributionQueries
 import com.j4x.flowta.database.GoalQueries
+import com.j4x.flowta.database.IntegrationLinkQueries
 import com.j4x.flowta.database.InternalTransferQueries
 import com.j4x.flowta.database.TransactionQueries
 import com.j4x.flowta.database.TransactionTypeQueries
@@ -41,4 +42,7 @@ object DatabaseModule {
 
     @Provides @Singleton
     fun provideGoalContributionQueries(db: FlowTaDatabase): GoalContributionQueries = db.goalContributionQueries
+
+    @Provides @Singleton
+    fun provideIntegrationLinkQueries(db: FlowTaDatabase): IntegrationLinkQueries = db.integrationLinkQueries
 }

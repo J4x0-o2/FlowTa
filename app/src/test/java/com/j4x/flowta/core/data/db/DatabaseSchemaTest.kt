@@ -8,7 +8,7 @@ import org.junit.Test
 /**
  * Guards the database schema contract.
  *
- * Schema v1 is the baseline shipped to devices (AndroidSqliteDriver stores
+ * Schema v1 was the baseline shipped to devices (AndroidSqliteDriver stores
  * `user_version = Schema.version`). When the schema changes, add `N.sqm` migrations,
  * regenerate the `N+1.db` snapshot and extend this test to open a driver on the previous
  * snapshot and run `FlowTaDatabase.Schema.migrate(...)`.
@@ -20,7 +20,7 @@ class DatabaseSchemaTest {
     }
 
     @Test
-    fun schemaVersion_isOne_untilFirstMigrationIsAdded() {
+    fun schemaVersion_isTwo_afterMiCuadreIntegrationMigration() {
         assertEquals(2L, FlowTaDatabase.Schema.version)
     }
 
