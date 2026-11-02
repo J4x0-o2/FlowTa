@@ -132,7 +132,7 @@ Route per task is recorded as `[route: …]`.
       (one with a deleted account) → card shows "MiCuadre", "Cuenta eliminada" + reconnect hint; Disconnect
       dialog → confirm → that row deleted in DB and gone from the card. Test links removed afterwards.
       ~700 authored lines (≈300 tests).
-- [ ] **F7 Docs** — CLAUDE.md (schema v2, contract, signing), README section. [route: inline]
+- [x] **F7 Docs** — CLAUDE.md (schema v2, contract, signing), README section. [route: inline]
 
 ## Acceptance criteria
 
@@ -184,6 +184,8 @@ Route per task is recorded as `[route: …]`.
   on the emulator ("Efectivo → Efectivo"). Remaining suggestions (labels resolved on main thread, error
   ends the card flow) left as later polish.
 
+- 2026-11-02: F7 docs — README (feature, architecture, release signing, privacy, status) and local CLAUDE.md (schema v2, integration, signing). Passive docs: structural readback only.
+
 ## Next step
 
-F7 docs, then MiCuadre side (M1–M6), then end-to-end emulator check.
+FlowTa side complete (F1–F7). Next: MiCuadre side (M1–M6), then end-to-end emulator check.
