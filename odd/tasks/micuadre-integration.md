@@ -111,7 +111,11 @@ Route per task is recorded as `[route: …]`.
 
 - 2026-11-02: plan written; exploration done.
 - 2026-11-02: D1 resolved; F1 done (61d6b79). Branch renamed to `feat/micuadre-integration`.
-- 2026-11-02: F2 done (schema v2).
+- 2026-11-02: F2 done (schema v2, 47fdd9a). Review (F1+F2, 4 lenses, risk high): granted → approved,
+  acknowledged (lineage review-2d2d63d3f2a7136c); reviewed boundary = 47fdd9a. Non-blocking follow-ups
+  to fold into F3: rename `DatabaseSchemaTest.schemaVersion_isOne_untilFirstMigrationIsAdded` (asserts 2);
+  the unique index only dedupes when BOTH source_app and external_id are non-null → F3 must reject
+  external rows missing either.
 
 ## Next step
 
