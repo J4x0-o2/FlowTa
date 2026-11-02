@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">FlowTa</string>
+    <string name="permission_record_income_label">Registrar ingresos en FlowTa</string>
+    <string name="permission_record_income_description">Permite a una app de confianza firmada con la misma clave registrar ingresos en FlowTa.</string>
 </resources>

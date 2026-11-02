@@ -29,10 +29,15 @@ twice. The user wants a single place with full control of all income and expense
 - Authority: `${applicationId}.integration` (so `com.j4x.flowta.integration`, `.staging` variant differs).
 - Permission: `com.j4x.flowta.permission.RECORD_INCOME`, `protectionLevel="signature"`.
 - Method `recordIncome`, extras:
-  `contract_version=1`, `source_app` (caller package), `external_id` (MiCuadre trip id as string),
+  `contract_version=1`, `source_app` (optional; the trusted source is always the caller's
+  `callingPackage`, and the extra, if present, must equal it or the reply is `INVALID`), `external_id` (MiCuadre trip id as string),
   `payment_method` (`CASH` | `TRANSFER`), `amount_minor` (Long, COP x 100), `occurred_at` (epoch ms,
   trip `endedAt`), `note` (e.g. "MiCuadre · Uber").
-- Response bundle `status`: `OK` | `DUPLICATE` | `NOT_LINKED` | `INVALID`.
+- `android:permission` on `<provider>` does NOT guard `call()`: the provider checks
+  `checkCallingPermission(RECORD_INCOME)` explicitly and throws `SecurityException` otherwise.
+- Response bundle `status`: `OK` | `DUPLICATE` | `NOT_LINKED` | `INVALID` | `ERROR`
+  (`message` accompanies `INVALID`/`ERROR`). `ERROR` is an unexpected FlowTa-side failure and is
+  retryable by the caller; `INVALID` is not.
   `NOT_LINKED` covers "never connected" and "mapped account/type was deleted".
 - Method `linkStatus` → `LINKED` | `NOT_LINKED` (lets MiCuadre show "reconnect").
 - Connect screen: explicit intent action `com.j4x.flowta.action.CONNECT_SOURCE`, same permission;
@@ -95,9 +100,17 @@ Route per task is recorded as `[route: …]`.
       RED: compile failure on the missing API (`Unresolved reference 'repository'`). GREEN:
       testDebugUnitTest + assembleDebug; parent re-ran RecordExternalIncomeTest (11), ResetAllDataTest
       (12), DatabaseSchemaTest (2): green. F2 follow-ups done (test renamed; blank ids → Invalid).
-- [ ] **F4 IntegrationProvider** — `call()`-only provider, `@EntryPoint` for the use case and link
+- [x] **F4 IntegrationProvider** — `call()`-only provider, `@EntryPoint` for the use case and link
       repository, manifest `<permission>` + `<provider>` (exported, guarded). Bundle ↔ domain mapping
-      tested as pure functions. [route: delegated]
+      tested as pure functions. [route: delegated — 2+ non-trivial files]
+      Evidence 2026-11-02: `feature/integration/provider/` (IntegrationContract, IntegrationDispatcher pure,
+      IntegrationProvider thin adapter: explicit `checkCallingPermission` + `callingPackage` as source,
+      lazy EntryPoint, exceptions → ERROR). F3 race follow-up: catch + re-check → Duplicate.
+      RED: `ExternalIncomeRaceTest.lostRace_onUniqueIndex…` failed with `UNIQUE constraint failed`.
+      GREEN: testDebugUnitTest, assembleDebug, merged manifest shows signature permission + provider
+      `com.j4x.flowta.integration`. Parent re-ran IntegrationDispatcherTest (13), ExternalIncomeRaceTest (2),
+      RecordExternalIncomeTest (11): green. Not unit-testable: provider `call()` itself (Android) → device check.
+      Cross-app note: MiCuadre M1 also declares the same signature permission (install-order safety).
 - [ ] **F5 Connect screen** — `ConnectSourceActivity` (Compose, theme-aware): income type picker
       (INCOME types, create-new shortcut), CASH account, TRANSFER account; Save → upsert link →
       `RESULT_OK`; Cancel → `RESULT_CANCELED`. ViewModel tests. [route: delegated]
@@ -128,6 +141,8 @@ Route per task is recorded as `[route: …]`.
   fold into F4: a concurrent second insert that loses the race hits the unique index and throws instead
   of returning `Duplicate` → map the constraint violation to `Duplicate`; add a test for it.
 
+- 2026-11-02: F4 done.
+
 ## Next step
 
-F4 (IntegrationProvider) → F5 → F6, then MiCuadre side.
+F5 (connect screen; activity guarded by the same permission) → F6 → F7, then MiCuadre side.

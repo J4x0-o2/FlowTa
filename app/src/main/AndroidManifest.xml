@@ -5,6 +5,12 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <permission
+        android:name="com.j4x.flowta.permission.RECORD_INCOME"
+        android:description="@string/permission_record_income_description"
+        android:label="@string/permission_record_income_label"
+        android:protectionLevel="signature" />
+
     <application
         android:name=".FlowTaApp"
         android:allowBackup="true"
@@ -36,6 +42,12 @@
                 android:value="androidx.startup"
                 tools:node="remove" />
         </provider>
+
+        <provider
+            android:name=".feature.integration.provider.IntegrationProvider"
+            android:authorities="${applicationId}.integration"
+            android:exported="true"
+            android:permission="com.j4x.flowta.permission.RECORD_INCOME" />
 
         <receiver
             android:name=".core.receiver.BootReceiver"
