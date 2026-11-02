@@ -163,6 +163,13 @@ Route per task is recorded as `[route: …]`.
     same-key caller (MiCuadre M5) and a link (F5). `run-as … content call` is blocked by Android
     (`ACCESS_CONTENT_PROVIDERS_EXTERNALLY`). Planned as the end-to-end check after M5.
 
+- 2026-11-02: F5 done (447e450). Review (3dc8bc0 + F5, reliability, medium): approved + acknowledged
+  (lineage review-79fc29e658daf24d); reviewed boundary = 447e450. Non-blocking follow-ups for F6:
+  ConnectSourceViewModel swallows a failed `links.get` silently (reconnect falls back to defaults with
+  no feedback); preselection runs only on the first emission, so a selected account deleted while the
+  screen is open stays selected → re-validate selections on every emission; the accounts/types
+  `collect` has no error handling.
+
 ## Next step
 
-F6 (connected apps / unlink) → F7 docs, then MiCuadre side.
+F6 (connected apps / unlink + F5 follow-ups) → F7 docs, then MiCuadre side.
