@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.Flow
 interface IntegrationLinkRepository {
     suspend fun get(sourceApp: String): IntegrationLink?
     fun observe(sourceApp: String): Flow<IntegrationLink?>
+    fun observeAll(): Flow<List<IntegrationLink>>
     suspend fun save(link: IntegrationLink)
     suspend fun delete(sourceApp: String)
 }

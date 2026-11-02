@@ -13,6 +13,9 @@ VALUES(?, ?, ?, ?, ?);
 selectBySource:
 SELECT * FROM integration_link WHERE source_app = ?;
 
+selectAll:
+SELECT * FROM integration_link ORDER BY created_at, source_app;
+
 deleteBySource:
 DELETE FROM integration_link WHERE source_app = ?;
 

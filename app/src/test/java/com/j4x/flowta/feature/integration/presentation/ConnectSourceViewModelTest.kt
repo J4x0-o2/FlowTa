@@ -16,6 +16,8 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -183,6 +185,87 @@ class ConnectSourceViewModelTest {
             assertTrue(awaitItem() is ConnectSourceEffect.ShowError)
         }
         coVerify(exactly = 0) { links.save(any()) }
+    }
+
+    @Test
+    fun failedLinkLookup_emitsError_andContinuesWithDefaults() = runTest {
+        coEvery { links.get(source) } throws IllegalStateException("disk")
+        val vm = vm()
+
+        vm.effects.test { assertTrue(awaitItem() is ConnectSourceEffect.ShowError) }
+        assertEquals("cash", vm.state.value.cashAccountId)
+        assertEquals("wallet", vm.state.value.transferAccountId)
+        assertTrue(vm.state.value.loaded)
+    }
+
+    @Test
+    fun selectedAccountDeletedWhileOpen_isCleared_andConnectDisabled() {
+        val accounts = MutableStateFlow(listOf(bank, cash, wallet))
+        every { getAccounts() } returns accounts
+        val vm = vm()
+        vm.onIntent(ConnectSourceIntent.SelectType("trips"))
+        assertTrue(vm.state.value.canConnect)
+
+        accounts.value = listOf(bank, wallet)
+
+        assertNull(vm.state.value.cashAccountId)
+        assertEquals("wallet", vm.state.value.transferAccountId)
+        assertFalse(vm.state.value.canConnect)
+    }
+
+    @Test
+    fun selectedTypeDeletedWhileOpen_isCleared_andConnectDisabled() {
+        val types = MutableStateFlow(listOf(trips))
+        every { getTypes("INCOME") } returns types
+        val vm = vm()
+        vm.onIntent(ConnectSourceIntent.SelectType("trips"))
+        assertTrue(vm.state.value.canConnect)
+
+        types.value = emptyList()
+
+        assertNull(vm.state.value.selectedTypeId)
+        assertFalse(vm.state.value.canConnect)
+    }
+
+    @Test
+    fun clearedSelection_isNotRepreselected_onLaterEmissions() {
+        val accounts = MutableStateFlow(listOf(bank, cash, wallet))
+        every { getAccounts() } returns accounts
+        val vm = vm()
+
+        accounts.value = listOf(bank, wallet)
+        accounts.value = listOf(bank, cash, wallet)
+
+        assertNull(vm.state.value.cashAccountId)
+    }
+
+    @Test
+    fun userChoices_surviveLaterEmissions() {
+        val accounts = MutableStateFlow(listOf(bank, cash, wallet))
+        every { getAccounts() } returns accounts
+        val vm = vm()
+        vm.onIntent(ConnectSourceIntent.SelectCashAccount("bank"))
+
+        accounts.value = listOf(bank, cash, wallet, account("extra", AccountType.SAVINGS))
+
+        assertEquals("bank", vm.state.value.cashAccountId)
+    }
+
+    @Test
+    fun accountsFlowFailure_emitsError_insteadOfCrashing() = runTest {
+        every { getAccounts() } returns flow { throw IllegalStateException("db") }
+        val vm = vm()
+
+        vm.effects.test { assertTrue(awaitItem() is ConnectSourceEffect.ShowError) }
+        assertFalse(vm.state.value.canConnect)
+    }
+
+    @Test
+    fun typesFlowFailure_emitsError_insteadOfCrashing() = runTest {
+        every { getTypes("INCOME") } returns flow { throw IllegalStateException("db") }
+        val vm = vm()
+
+        vm.effects.test { assertTrue(awaitItem() is ConnectSourceEffect.ShowError) }
     }
 
     @Test

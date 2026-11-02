@@ -1,6 +1,7 @@
 package com.j4x.flowta.feature.integration.data.repository
 
 import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.coroutines.mapToList
 import app.cash.sqldelight.coroutines.mapToOneOrNull
 import com.j4x.flowta.database.IntegrationLinkQueries
 import com.j4x.flowta.feature.integration.domain.model.IntegrationLink
@@ -26,6 +27,12 @@ class IntegrationLinkRepositoryImpl @Inject constructor(
             .asFlow()
             .mapToOneOrNull(Dispatchers.IO)
             .map { it?.toDomain() }
+
+    override fun observeAll(): Flow<List<IntegrationLink>> =
+        queries.selectAll()
+            .asFlow()
+            .mapToList(Dispatchers.IO)
+            .map { rows -> rows.map { it.toDomain() } }
 
     override suspend fun save(link: IntegrationLink) = withContext(Dispatchers.IO) {
         queries.upsert(link.sourceApp, link.incomeTypeId, link.cashAccountId, link.transferAccountId, link.createdAt)

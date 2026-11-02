@@ -26,6 +26,8 @@ import com.j4x.flowta.feature.integration.data.repository.ExternalIncomeReposito
 import com.j4x.flowta.feature.integration.data.repository.IntegrationLinkRepositoryImpl
 import com.j4x.flowta.feature.integration.domain.repository.ExternalIncomeRepository
 import com.j4x.flowta.feature.integration.domain.repository.IntegrationLinkRepository
+import com.j4x.flowta.feature.integration.presentation.AppLabelResolver
+import com.j4x.flowta.feature.integration.presentation.PackageManagerAppLabelResolver
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -74,4 +76,7 @@ abstract class RepositoryModule {
 
     @Binds @Singleton
     abstract fun bindExternalIncomeRepository(impl: ExternalIncomeRepositoryImpl): ExternalIncomeRepository
+
+    @Binds @Singleton
+    abstract fun bindAppLabelResolver(impl: PackageManagerAppLabelResolver): AppLabelResolver
 }

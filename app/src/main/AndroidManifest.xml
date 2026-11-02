@@ -11,6 +11,12 @@
         android:label="@string/permission_record_income_label"
         android:protectionLevel="signature" />
 
+    <!-- Package visibility so Profile can show the source apps' labels. -->
+    <queries>
+        <package android:name="com.micuadre.app" />
+        <package android:name="com.micuadre.app.debug" />
+    </queries>
+
     <application
         android:name=".FlowTaApp"
         android:allowBackup="true"

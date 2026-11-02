@@ -14,6 +14,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
@@ -63,18 +64,27 @@ class ConnectSourceViewModel @Inject constructor(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                _effects.send(ConnectSourceEffect.ShowError("No se pudo cargar la conexión anterior"))
                 null
             }
             combine(getAccounts(), getTypesByCategory("INCOME")) { accounts, types -> accounts to types }
+                .catch { _effects.send(ConnectSourceEffect.ShowError("No se pudieron cargar tus cuentas y tipos")) }
                 .collect { (accounts, types) ->
                     _state.update { s ->
                         val base = s.copy(loaded = true, accounts = accounts, incomeTypes = types)
-                        if (preselected) base else preselect(base, existing)
+                        if (preselected) revalidate(base) else preselect(base, existing)
                     }
                     preselected = true
                 }
         }
     }
+
+    /** Drops selections whose account/type no longer exists (e.g. deleted while the screen is open). */
+    private fun revalidate(s: ConnectSourceState) = s.copy(
+        selectedTypeId = s.selectedTypeId?.takeIf { id -> s.incomeTypes.any { it.id == id } },
+        cashAccountId = s.cashAccountId?.takeIf { id -> s.accounts.any { it.id == id } },
+        transferAccountId = s.transferAccountId?.takeIf { id -> s.accounts.any { it.id == id } }
+    )
 
     private fun preselect(s: ConnectSourceState, link: IntegrationLink?): ConnectSourceState {
         val accounts = s.accounts

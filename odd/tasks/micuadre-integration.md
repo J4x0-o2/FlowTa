@@ -122,8 +122,16 @@ Route per task is recorded as `[route: …]`.
       testDebugUnitTest (158 tests, 0 failures) + assembleDebug. Emulator: `am start` from shell →
       `SecurityException … requires com.j4x.flowta.permission.RECORD_INCOME`. Visual check pending a
       same-key caller (MiCuadre M4). ~600 authored lines (≈220 tests).
-- [ ] **F6 Connected apps / unlink** — in Profile/Settings, show the MiCuadre link (accounts per
-      method) with "Disconnect" (deletes the link → future calls get `NOT_LINKED`). [route: delegated]
+- [x] **F6 Connected apps / unlink** — in Profile/Settings, show the MiCuadre link (accounts per
+      method) with "Disconnect" (deletes the link → future calls get `NOT_LINKED`). [route: delegated — 2+ non-trivial files]
+      Evidence 2026-11-02: "Apps conectadas" card in ProfileScreen (`ConnectedAppsViewModel`, labels via
+      `AppLabelResolver` + `<queries>` for com.micuadre.app[.debug]); deleted refs shown in error color;
+      confirm dialog → delete. F5 follow-ups fixed (link-load error, re-validate selections, collect
+      errors). RED: compile failure on missing `observeAll`/`AppLabelResolver`/`ConnectedAppsViewModel`.
+      GREEN: parent re-ran testDebugUnitTest (177, 0 failures) + assembleDebug. Emulator: seeded two links
+      (one with a deleted account) → card shows "MiCuadre", "Cuenta eliminada" + reconnect hint; Disconnect
+      dialog → confirm → that row deleted in DB and gone from the card. Test links removed afterwards.
+      ~700 authored lines (≈300 tests).
 - [ ] **F7 Docs** — CLAUDE.md (schema v2, contract, signing), README section. [route: inline]
 
 ## Acceptance criteria
@@ -172,4 +180,4 @@ Route per task is recorded as `[route: …]`.
 
 ## Next step
 
-F6 (connected apps / unlink + F5 follow-ups) → F7 docs, then MiCuadre side.
+F7 docs, then MiCuadre side (M1–M6), then end-to-end emulator check.
