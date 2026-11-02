@@ -123,7 +123,10 @@ Route per task is recorded as `[route: …]`.
   the unique index only dedupes when BOTH source_app and external_id are non-null → F3 must reject
   external rows missing either.
 
-- 2026-11-02: F3 done.
+- 2026-11-02: F3 done (867d855). Review (1 lens reliability, risk medium, slice budget): granted →
+  approved, acknowledged (lineage review-52ccaabdd6902840); reviewed boundary = 867d855. Follow-ups to
+  fold into F4: a concurrent second insert that loses the race hits the unique index and throws instead
+  of returning `Duplicate` → map the constraint violation to `Duplicate`; add a test for it.
 
 ## Next step
 
