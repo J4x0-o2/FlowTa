@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Dollar sign, white on the black background. Built only from white shapes with no dark strokes,
+  so the same drawable works as the monochrome layer for themed icons. The S is two 240-degree
+  arcs that meet at the center, and the bar shows only above and below it. Everything stays
+  inside the 66dp safe zone.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- S: top bowl counter-clockwise into the center, bottom bowl clockwise out of it. -->
+    <path
+        android:pathData="M63.53,37.5A11,11 0,1 0,54 54A11,11 0,1 1,44.47 70.5"
+        android:strokeWidth="9"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeLineCap="round" />
+    <!-- Bar stubs above and below the S. -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M50.5,23H57.5V30H50.5Z M50.5,78H57.5V85H50.5Z" />
+</vector>
