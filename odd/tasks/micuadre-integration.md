@@ -141,7 +141,19 @@ Route per task is recorded as `[route: …]`.
   fold into F4: a concurrent second insert that loses the race hits the unique index and throws instead
   of returning `Duplicate` → map the constraint violation to `Duplicate`; add a test for it.
 
-- 2026-11-02: F4 done.
+- 2026-11-02: F4 done (47ad062). Review (reliability, medium): approved + acknowledged (lineage
+  review-73ebdb5886e53775). Its WARNING "Long contract_version rejected" was a real bug → fixed with
+  TDD in 3dc8bc0 (RED `expected:<[OK]> but was:<[INVALID]>`; 141 unit tests green). Remaining
+  non-blocking notes: provider guard has no automated test (covered by emulator check below).
+- 2026-11-02 emulator (Pixel_6, API 37), user-requested:
+  - Upgrade v1 → v2 over the user's emulator data (3 accounts, 194 transactions, 23 types; backup in
+    `Documents/FlowTa-backups/2026-11-02-pre-v2`): `user_version` 2, balances and transaction sum
+    identical, `integration_link` + unique index present, app launches, no crash in logcat.
+  - Unsigned caller (`adb shell content call`, uid 2000) → `SecurityException: Permission Denial …
+    requires com.j4x.flowta.permission.RECORD_INCOME`; nothing written.
+  - NOT yet verified on device: positive path (OK / DUPLICATE / routing / NOT_LINKED) — needs a
+    same-key caller (MiCuadre M5) and a link (F5). `run-as … content call` is blocked by Android
+    (`ACCESS_CONTENT_PROVIDERS_EXTERNALLY`). Planned as the end-to-end check after M5.
 
 ## Next step
 
