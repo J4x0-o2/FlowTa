@@ -111,9 +111,17 @@ Route per task is recorded as `[route: …]`.
       `com.j4x.flowta.integration`. Parent re-ran IntegrationDispatcherTest (13), ExternalIncomeRaceTest (2),
       RecordExternalIncomeTest (11): green. Not unit-testable: provider `call()` itself (Android) → device check.
       Cross-app note: MiCuadre M1 also declares the same signature permission (install-order safety).
-- [ ] **F5 Connect screen** — `ConnectSourceActivity` (Compose, theme-aware): income type picker
+- [x] **F5 Connect screen** — `ConnectSourceActivity` (Compose, theme-aware): income type picker
       (INCOME types, create-new shortcut), CASH account, TRANSFER account; Save → upsert link →
-      `RESULT_OK`; Cancel → `RESULT_CANCELED`. ViewModel tests. [route: delegated]
+      `RESULT_OK`; Cancel → `RESULT_CANCELED`. ViewModel tests. [route: delegated — 2+ non-trivial files]
+      Evidence 2026-11-02: activity guarded by the signature permission, source = `callingPackage`
+      (null → RESULT_CANCELED); preselection: existing link > first CASH / first DIGITAL_WALLET else BANK;
+      "Nuevo tipo…" prefilled "Carreras" via `CreateIncomeTypeUseCase` (reuses a same-name INCOME type;
+      finds the new id by diffing ids because `TransactionTypeRepository.add` returns no id).
+      RED: compile failure `Unresolved reference 'CreateIncomeTypeUseCase'`. GREEN: parent re-ran
+      testDebugUnitTest (158 tests, 0 failures) + assembleDebug. Emulator: `am start` from shell →
+      `SecurityException … requires com.j4x.flowta.permission.RECORD_INCOME`. Visual check pending a
+      same-key caller (MiCuadre M4). ~600 authored lines (≈220 tests).
 - [ ] **F6 Connected apps / unlink** — in Profile/Settings, show the MiCuadre link (accounts per
       method) with "Disconnect" (deletes the link → future calls get `NOT_LINKED`). [route: delegated]
 - [ ] **F7 Docs** — CLAUDE.md (schema v2, contract, signing), README section. [route: inline]
@@ -157,4 +165,4 @@ Route per task is recorded as `[route: …]`.
 
 ## Next step
 
-F5 (connect screen; activity guarded by the same permission) → F6 → F7, then MiCuadre side.
+F6 (connected apps / unlink) → F7 docs, then MiCuadre side.

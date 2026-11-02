@@ -5,6 +5,9 @@ object IntegrationContract {
     const val PERMISSION = "com.j4x.flowta.permission.RECORD_INCOME"
     const val CONTRACT_VERSION = 1
 
+    /** Explicit-intent action of the connect screen; started for result, guarded by [PERMISSION]. */
+    const val ACTION_CONNECT_SOURCE = "com.j4x.flowta.action.CONNECT_SOURCE"
+
     const val METHOD_RECORD_INCOME = "recordIncome"
     const val METHOD_LINK_STATUS = "linkStatus"
 

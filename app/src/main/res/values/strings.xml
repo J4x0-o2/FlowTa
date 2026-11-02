@@ -2,4 +2,15 @@
     <string name="app_name">FlowTa</string>
     <string name="permission_record_income_label">Registrar ingresos en FlowTa</string>
     <string name="permission_record_income_description">Permite a una app de confianza firmada con la misma clave registrar ingresos en FlowTa.</string>
+    <string name="connect_title">Conectar %1$s</string>
+    <string name="connect_explanation">Los ingresos de %1$s se registrarán en FlowTa</string>
+    <string name="connect_income_type">Tipo de ingreso</string>
+    <string name="connect_new_type_option">Nuevo tipo…</string>
+    <string name="connect_new_type_name">Nombre del tipo</string>
+    <string name="connect_cash_account">Cuenta para efectivo</string>
+    <string name="connect_transfer_account">Cuenta para transferencias</string>
+    <string name="connect_select">Selecciona</string>
+    <string name="connect_no_accounts">Aún no tienes cuentas en FlowTa. Crea una cuenta primero y vuelve a intentar.</string>
+    <string name="connect_cancel">Cancelar</string>
+    <string name="connect_confirm">Conectar</string>
 </resources>
