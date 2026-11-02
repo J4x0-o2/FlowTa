@@ -82,7 +82,15 @@ class IntegrationDispatcherTest {
         assertInvalid(record(validExtras(IntegrationContract.EXTRA_CONTRACT_VERSION to 2)))
         assertInvalid(record(validExtras(IntegrationContract.EXTRA_CONTRACT_VERSION to null)))
         assertInvalid(record(validExtras(IntegrationContract.EXTRA_CONTRACT_VERSION to "1")))
+        assertInvalid(record(validExtras(IntegrationContract.EXTRA_CONTRACT_VERSION to 2L)))
         assertTrue(recorded.isEmpty())
+    }
+
+    @Test
+    fun longContractVersion_isAccepted() {
+        val reply = record(validExtras(IntegrationContract.EXTRA_CONTRACT_VERSION to 1L))
+        assertEquals(IntegrationContract.STATUS_OK, reply.status)
+        assertEquals(1, recorded.size)
     }
 
     @Test

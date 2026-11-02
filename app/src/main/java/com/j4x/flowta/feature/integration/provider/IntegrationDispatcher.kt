@@ -34,8 +34,13 @@ class IntegrationDispatcher(
     )
 
     private fun handleRecord(callingPackage: String, extras: (String) -> Any?): IntegrationReply {
-        val version = extras(IntegrationContract.EXTRA_CONTRACT_VERSION)
-        if (version != IntegrationContract.CONTRACT_VERSION) return invalid("unsupported contract_version")
+        // Accept Int or Long (putInt / putLong on the caller side); anything else is unsupported.
+        val version = when (val raw = extras(IntegrationContract.EXTRA_CONTRACT_VERSION)) {
+            is Int  -> raw.toLong()
+            is Long -> raw
+            else    -> null
+        }
+        if (version != IntegrationContract.CONTRACT_VERSION.toLong()) return invalid("unsupported contract_version")
 
         val declaredSource = extras(IntegrationContract.EXTRA_SOURCE_APP)
         if (declaredSource != null && declaredSource != callingPackage) {
