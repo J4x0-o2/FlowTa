@@ -6,8 +6,12 @@ CREATE TABLE IF NOT EXISTS user_transaction (
     source_type_id      TEXT    REFERENCES transaction_type(id),
     account_id          TEXT    NOT NULL REFERENCES account(id),
     note                TEXT,
-    created_at          INTEGER NOT NULL
+    created_at          INTEGER NOT NULL,
+    source_app          TEXT,
+    external_id         TEXT
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS user_transaction_source_external ON user_transaction(source_app, external_id);
 
 -- flow_type: INCOME | EXPENSE
 

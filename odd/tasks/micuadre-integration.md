@@ -76,11 +76,14 @@ Route per task is recorded as `[route: …]`.
       config, unsigned when absent. Depends on D1. Check: `assembleRelease` + `apksigner verify --print-certs`
       shows the same SHA-1 as MiCuadre. [route: inline — single build file, pattern copied from MiCuadre]
       Evidence 2026-11-02: both release APKs SHA-1 `71:54:82:13:3D:05:21:F1:37:E8:1B:46:74:A2:12:3E:65:86:6D:4A`.
-- [ ] **F2 Migration 1 → 2** — `migrations/1.sqm`: `user_transaction` gets `source_app TEXT`,
+- [x] **F2 Migration 1 → 2** — `migrations/1.sqm`: `user_transaction` gets `source_app TEXT`,
       `external_id TEXT` + `CREATE UNIQUE INDEX` on both; new table
       `integration_link(source_app TEXT PK, income_type_id TEXT NOT NULL, cash_account_id TEXT NOT NULL,
       transfer_account_id TEXT NOT NULL, created_at INTEGER NOT NULL)`. Update `.sq`, generate `2.db`,
-      `verifySqlDelightMigration`, extend `MigrationSnapshotTest` (1 → 2 keeps existing rows). [route: delegated]
+      `verifySqlDelightMigration`, extend `MigrationSnapshotTest` (1 → 2 keeps existing rows). [route: delegated — 4+ files: .sq, .sqm, snapshot, tests]
+      Evidence 2026-11-02: RED `table user_transaction has no column named source_app` (5/8 db tests);
+      GREEN generateDebugFlowTaDatabaseSchema, verifySqlDelightMigration (~8 min, CPU-bound ObjectDiffer),
+      testDebugUnitTest (114 tests), assembleDebug; parent re-ran the 8 db tests: green.
 - [ ] **F3 Record external income (domain + data)** — `RecordExternalIncomeUseCase` returning
       `Recorded | Duplicate | NotLinked | Invalid`; repository inserts with `created_at = occurredAt`,
       source columns and balance update atomically; duplicate detected by the unique key. Tests over
@@ -107,8 +110,9 @@ Route per task is recorded as `[route: …]`.
 ## Progress
 
 - 2026-11-02: plan written; exploration done.
-- 2026-11-02: D1 resolved; F1 done on branch `build/release-signing`.
+- 2026-11-02: D1 resolved; F1 done (61d6b79). Branch renamed to `feat/micuadre-integration`.
+- 2026-11-02: F2 done (schema v2).
 
 ## Next step
 
-F2 (migration) → F3 → F4 → F5 → F6, then MiCuadre side.
+F3 (record external income) → F4 → F5 → F6, then MiCuadre side.

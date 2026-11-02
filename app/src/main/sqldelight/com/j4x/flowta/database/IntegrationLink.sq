@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS integration_link (
+    source_app          TEXT    NOT NULL PRIMARY KEY,
+    income_type_id      TEXT    NOT NULL,
+    cash_account_id     TEXT    NOT NULL,
+    transfer_account_id TEXT    NOT NULL,
+    created_at          INTEGER NOT NULL
+);
+
+upsert:
+INSERT OR REPLACE INTO integration_link(source_app, income_type_id, cash_account_id, transfer_account_id, created_at)
+VALUES(?, ?, ?, ?, ?);
+
+selectBySource:
+SELECT * FROM integration_link WHERE source_app = ?;
+
+deleteBySource:
+DELETE FROM integration_link WHERE source_app = ?;
+
+deleteAll:
+DELETE FROM integration_link;

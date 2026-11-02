@@ -21,7 +21,7 @@ class DatabaseSchemaTest {
 
     @Test
     fun schemaVersion_isOne_untilFirstMigrationIsAdded() {
-        assertEquals(1L, FlowTaDatabase.Schema.version)
+        assertEquals(2L, FlowTaDatabase.Schema.version)
     }
 
     @Test
@@ -40,7 +40,7 @@ class DatabaseSchemaTest {
         assertEquals(
             setOf(
                 "account", "goal", "goal_contribution",
-                "internal_transfer", "transaction_type", "user_transaction"
+                "integration_link", "internal_transfer", "transaction_type", "user_transaction"
             ),
             tables
         )
