@@ -184,7 +184,8 @@ Route per task is recorded as `[route: …]`.
   on the emulator ("Efectivo → Efectivo"). Remaining suggestions (labels resolved on main thread, error
   ends the card flow) left as later polish.
 
-- 2026-11-02: F7 docs — README (feature, architecture, release signing, privacy, status) and local CLAUDE.md (schema v2, integration, signing). Passive docs: structural readback only.
+- 2026-11-02: F7 docs — README (feature, architecture, release signing, privacy, status) and local CLAUDE.md (schema v2, integration, signing). Passive docs: structural readback only. Commit 12204f4. Assess d2639db..12204f4 (base e62ede0):
+  medium, `review_due` false (`under_budget`) → stays pending in the slice.
 
 ## Next step
 
