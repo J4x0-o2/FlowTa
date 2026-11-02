@@ -178,6 +178,12 @@ Route per task is recorded as `[route: …]`.
   screen is open stays selected → re-validate selections on every emission; the accounts/types
   `collect` has no error handling.
 
+- 2026-11-02: F6 done (e62ede0). Review (reliability, medium): approved + acknowledged (lineage
+  review-683eb1dea985079c); reviewed boundary = e62ede0. Its WARNING (trailing space trimmed in the
+  "Efectivo → " string resources) was visible on the emulator → fixed by quoting the strings; re-checked
+  on the emulator ("Efectivo → Efectivo"). Remaining suggestions (labels resolved on main thread, error
+  ends the card flow) left as later polish.
+
 ## Next step
 
 F7 docs, then MiCuadre side (M1–M6), then end-to-end emulator check.

@@ -14,8 +14,8 @@
     <string name="connect_cancel">Cancelar</string>
     <string name="connect_confirm">Conectar</string>
     <string name="connected_apps_title">Apps conectadas</string>
-    <string name="connected_apps_cash_prefix">Efectivo → </string>
-    <string name="connected_apps_transfer_prefix">Transferencias → </string>
+    <string name="connected_apps_cash_prefix">"Efectivo → "</string>
+    <string name="connected_apps_transfer_prefix">"Transferencias → "</string>
     <string name="connected_apps_account_deleted">Cuenta eliminada</string>
     <string name="connected_apps_type_deleted">Tipo eliminado</string>
     <string name="connected_apps_reconnect_hint">Reconéctala desde %1$s</string>
