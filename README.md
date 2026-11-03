@@ -14,6 +14,12 @@ repositorio en [Obtainium](https://github.com/ImranR98/Obtainium) para recibir a
 Desde la 1.1.0 la app se firma con el mismo certificado que MiCuadre (necesario para la integración).
 Si tienes instalada una versión firmada con otro certificado, Android no deja actualizarla encima.
 
+## Novedades en 1.1.0
+
+- **Integración con MiCuadre.** Las carreras que termines en [MiCuadre](https://github.com/J4x0-o2/Mi_Cuadre_App) entran solas como ingresos: eliges el tipo de ingreso y una cuenta para las carreras en efectivo y otra para las de transferencia. Reenviar una carrera nunca la duplica, y desde *Perfil › Apps conectadas* ves la conexión y puedes desconectarla.
+- **Ícono temático.** El ícono es vectorial y se adapta a los colores del tema de Android 13 o superior.
+- **Firma de release.** La app se firma con el mismo certificado que MiCuadre.
+
 ## Qué hace
 
 - **Registro en burbujas.** Ingresos, gastos y transferencias entre cuentas desde una sola hoja con tres pestañas. Cada movimiento tiene categoría, nota opcional y, en los ingresos, una fuente.
@@ -107,7 +113,7 @@ En Windows usa `gradlew.bat` o ejecuta los comandos desde Git Bash. También pue
 
 **Cambios de esquema.** El esquema está versionado (versión 2, snapshots `app/src/main/sqldelight/databases/1.db` y `2.db`, migraciones en `app/src/main/sqldelight/migrations/`) y las migraciones se verifican con `./gradlew verifySqlDelightMigration`. Antes de tocar un `.sq`, sigue el procedimiento de la sección *Migraciones* de [`CLAUDE.md`](CLAUDE.md).
 
-**Build de release.** El release se firma con la misma llave que MiCuadre, porque la integración usa un permiso de nivel `signature`. Configura en `local.properties` (no se versiona) `FLOWTA_KEYSTORE_FILE`, `FLOWTA_KEYSTORE_PASSWORD`, `FLOWTA_KEY_ALIAS` y `FLOWTA_KEY_PASSWORD`, o las variables de entorno del mismo nombre. Si falta alguna, `assembleRelease` falla antes de compilar.
+**Build de release.** El release se firma con la misma llave que MiCuadre, porque la integración usa un permiso de nivel `signature`. Configura en `local.properties` (no se versiona) `FLOWTA_KEYSTORE_FILE`, `FLOWTA_KEYSTORE_PASSWORD`, `FLOWTA_KEY_ALIAS` y `FLOWTA_KEY_PASSWORD`, o las variables de entorno del mismo nombre. Si no hay ninguna, el APK sale sin firmar; si solo hay algunas, `assembleRelease` falla antes de compilar y dice cuáles faltan.
 
 **Nota para Windows.** El módulo `tools/sqlite-worker-shim` solo participa en el build (no va en el APK): evita que `sqlite-jdbc` intente extraer su librería nativa en `C:\Windows` cuando Gradle 9 ejecuta las tareas de SQLDelight. Los detalles están en `CLAUDE.md`.
 
@@ -120,5 +126,5 @@ Toda la información (cuentas, movimientos, categorías y preferencias) se guard
 La app es funcional: registro, cuentas, métricas, historial, reinicio y borrado de datos están implementados y cubiertos por pruebas unitarias.
 
 - **Metas de ahorro:** el modelo de datos y los repositorios existen, pero la pantalla `GoalsScreen` es todavía un marcador de posición.
-- **Integración con MiCuadre:** el lado de FlowTa está implementado (provider, pantalla de conexión, apps conectadas en Perfil); falta el lado de MiCuadre.
+- **Integración con MiCuadre:** completa desde FlowTa 1.1.0 y MiCuadre 1.4.0, probada de punta a punta en emulador.
 - **Pruebas instrumentadas:** no hay `androidTestImplementation` configurado.
