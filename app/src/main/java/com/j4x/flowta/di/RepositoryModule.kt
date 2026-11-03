@@ -22,6 +22,12 @@ import com.j4x.flowta.feature.transfers.data.repository.TransferRepositoryImpl
 import com.j4x.flowta.feature.transfers.domain.repository.TransferRepository
 import com.j4x.flowta.feature.types.data.repository.TransactionTypeRepositoryImpl
 import com.j4x.flowta.feature.types.domain.repository.TransactionTypeRepository
+import com.j4x.flowta.feature.integration.data.repository.ExternalIncomeRepositoryImpl
+import com.j4x.flowta.feature.integration.data.repository.IntegrationLinkRepositoryImpl
+import com.j4x.flowta.feature.integration.domain.repository.ExternalIncomeRepository
+import com.j4x.flowta.feature.integration.domain.repository.IntegrationLinkRepository
+import com.j4x.flowta.feature.integration.presentation.AppLabelResolver
+import com.j4x.flowta.feature.integration.presentation.PackageManagerAppLabelResolver
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -64,4 +70,13 @@ abstract class RepositoryModule {
 
     @Binds @Singleton
     abstract fun bindAppDataRepository(impl: AppDataRepositoryImpl): AppDataRepository
+
+    @Binds @Singleton
+    abstract fun bindIntegrationLinkRepository(impl: IntegrationLinkRepositoryImpl): IntegrationLinkRepository
+
+    @Binds @Singleton
+    abstract fun bindExternalIncomeRepository(impl: ExternalIncomeRepositoryImpl): ExternalIncomeRepository
+
+    @Binds @Singleton
+    abstract fun bindAppLabelResolver(impl: PackageManagerAppLabelResolver): AppLabelResolver
 }

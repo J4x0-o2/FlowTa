@@ -4,6 +4,22 @@
 
 ![FlowTa: pantalla principal en tema claro y oscuro](docs/images/cover.png)
 
+## Cómo instalar
+
+FlowTa se distribuye desde las [releases de GitHub](https://github.com/J4x0-o2/FlowTa/releases/latest)
+(versión actual **1.1.0**). Requiere Android 10 o superior. Descarga `FlowTa-<versión>.apk`, ábrelo y
+permite la instalación desde esa fuente cuando Android lo pida; también puedes agregar la URL del
+repositorio en [Obtainium](https://github.com/ImranR98/Obtainium) para recibir avisos de versiones nuevas.
+
+Desde la 1.1.0 la app se firma con el mismo certificado que MiCuadre (necesario para la integración).
+Si tienes instalada una versión firmada con otro certificado, Android no deja actualizarla encima.
+
+## Novedades en 1.1.0
+
+- **Integración con MiCuadre.** Las carreras que termines en [MiCuadre](https://github.com/J4x0-o2/Mi_Cuadre_App) entran solas como ingresos: eliges el tipo de ingreso y una cuenta para las carreras en efectivo y otra para las de transferencia. Reenviar una carrera nunca la duplica, y desde *Perfil › Apps conectadas* ves la conexión y puedes desconectarla.
+- **Ícono temático.** El ícono es vectorial y se adapta a los colores del tema de Android 13 o superior.
+- **Firma de release.** La app se firma con el mismo certificado que MiCuadre.
+
 ## Qué hace
 
 - **Registro en burbujas.** Ingresos, gastos y transferencias entre cuentas desde una sola hoja con tres pestañas. Cada movimiento tiene categoría, nota opcional y, en los ingresos, una fuente.
@@ -14,6 +30,7 @@
 - **Reiniciar una cuenta.** Borra los movimientos de una cuenta y la deja con el saldo inicial que indiques.
 - **Borrar todos los datos.** Desde Ajustes, con confirmación escribiendo `BORRAR`; la app queda como recién instalada.
 - **Ajustes.** Tema claro u oscuro y moneda COP, USD o EUR.
+- **Integración con MiCuadre.** MiCuadre puede registrar en FlowTa, como ingreso, cada carrera terminada. Al conectarla eliges el tipo de ingreso y una cuenta para las carreras en efectivo y otra para las de transferencia. Las apps conectadas se ven y se desconectan desde Perfil.
 - **Sin conexión.** La app no declara permiso de internet; no hay cuentas de usuario ni servidores.
 
 ## Capturas
@@ -73,6 +90,7 @@ app/src/main/java/com/j4x/flowta/
     ├── history/         # historial semanal, mensual y anual
     ├── profile/         # perfil: capital total, cuentas y categorías
     ├── settings/        # tema, moneda, borrado de datos
+    ├── integration/     # ingresos de apps hermanas (MiCuadre): provider, conexión, apps conectadas
     └── goals/           # metas de ahorro (dominio y datos; interfaz pendiente)
 ```
 
@@ -93,18 +111,20 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 
 En Windows usa `gradlew.bat` o ejecuta los comandos desde Git Bash. También puedes abrir la carpeta en Android Studio y ejecutar la configuración `app`.
 
-**Cambios de esquema.** El esquema está versionado (snapshot `app/src/main/sqldelight/databases/1.db`) y las migraciones se verifican con `./gradlew verifySqlDelightMigration`. Antes de tocar un `.sq`, sigue el procedimiento de la sección *Migraciones* de [`CLAUDE.md`](CLAUDE.md).
+**Cambios de esquema.** El esquema está versionado (versión 2, snapshots `app/src/main/sqldelight/databases/1.db` y `2.db`, migraciones en `app/src/main/sqldelight/migrations/`) y las migraciones se verifican con `./gradlew verifySqlDelightMigration`. Antes de tocar un `.sq`, sigue el procedimiento de la sección *Migraciones* de [`CLAUDE.md`](CLAUDE.md).
+
+**Build de release.** El release se firma con la misma llave que MiCuadre, porque la integración usa un permiso de nivel `signature`. Configura en `local.properties` (no se versiona) `FLOWTA_KEYSTORE_FILE`, `FLOWTA_KEYSTORE_PASSWORD`, `FLOWTA_KEY_ALIAS` y `FLOWTA_KEY_PASSWORD`, o las variables de entorno del mismo nombre. Si no hay ninguna, el APK sale sin firmar; si solo hay algunas, `assembleRelease` falla antes de compilar y dice cuáles faltan.
 
 **Nota para Windows.** El módulo `tools/sqlite-worker-shim` solo participa en el build (no va en el APK): evita que `sqlite-jdbc` intente extraer su librería nativa en `C:\Windows` cuando Gradle 9 ejecuta las tareas de SQLDelight. Los detalles están en `CLAUDE.md`.
 
 ## Datos y privacidad
 
-Toda la información (cuentas, movimientos, categorías y preferencias) se guarda únicamente en el dispositivo, en una base SQLite y en DataStore. La app no pide permiso de internet, no envía datos a ningún servicio y no requiere registro. *Borrar todos los datos* en Ajustes elimina todo y restablece las preferencias.
+Toda la información (cuentas, movimientos, categorías y preferencias) se guarda únicamente en el dispositivo, en una base SQLite y en DataStore. La app no pide permiso de internet, no envía datos a ningún servicio y no requiere registro. La integración con MiCuadre es local, entre apps del mismo teléfono: solo una app firmada con la misma llave puede registrar ingresos, y únicamente después de que la conectes. *Borrar todos los datos* en Ajustes elimina todo y restablece las preferencias.
 
 ## Estado y próximos pasos
 
 La app es funcional: registro, cuentas, métricas, historial, reinicio y borrado de datos están implementados y cubiertos por pruebas unitarias.
 
 - **Metas de ahorro:** el modelo de datos y los repositorios existen, pero la pantalla `GoalsScreen` es todavía un marcador de posición.
-- **Integración con MiCuadre:** está planificada y aún no se ha implementado.
+- **Integración con MiCuadre:** completa desde FlowTa 1.1.0 y MiCuadre 1.4.0, probada de punta a punta en emulador.
 - **Pruebas instrumentadas:** no hay `androidTestImplementation` configurado.

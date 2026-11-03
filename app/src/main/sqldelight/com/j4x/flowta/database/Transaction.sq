@@ -6,8 +6,12 @@ CREATE TABLE IF NOT EXISTS user_transaction (
     source_type_id      TEXT    REFERENCES transaction_type(id),
     account_id          TEXT    NOT NULL REFERENCES account(id),
     note                TEXT,
-    created_at          INTEGER NOT NULL
+    created_at          INTEGER NOT NULL,
+    source_app          TEXT,
+    external_id         TEXT
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS user_transaction_source_external ON user_transaction(source_app, external_id);
 
 -- flow_type: INCOME | EXPENSE
 
@@ -39,6 +43,13 @@ ORDER BY t.created_at DESC;
 insert:
 INSERT INTO user_transaction(id, amount, flow_type, transaction_type_id, source_type_id, account_id, note, created_at)
 VALUES(?, ?, ?, ?, ?, ?, ?, ?);
+
+insertExternal:
+INSERT INTO user_transaction(id, amount, flow_type, transaction_type_id, source_type_id, account_id, note, created_at, source_app, external_id)
+VALUES(?, ?, 'INCOME', ?, NULL, ?, ?, ?, ?, ?);
+
+countBySourceExternal:
+SELECT COUNT(*) FROM user_transaction WHERE source_app = ? AND external_id = ?;
 
 delete:
 DELETE FROM user_transaction WHERE id = ?;

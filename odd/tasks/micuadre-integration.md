@@ -1,0 +1,192 @@
+# MiCuadre integration (FlowTa side)
+
+Counterpart: `MiCuadre/odd/tasks/flowta-integration.md` (MiCuadre side). Engram mirror: `odd/micuadre-integration/tasks`.
+
+## Objective
+
+Every trip finished in MiCuadre is recorded in FlowTa as an income, in the FlowTa account the user
+assigned to that trip's payment method (cash or transfer), with no duplicates and no lost entries.
+
+## Problem / why
+
+The user drives with MiCuadre and manages money in FlowTa. Today every trip income must be typed
+twice. The user wants a single place with full control of all income and expenses.
+
+## Agreed design (approved 2026-10-18, refined 2026-11-02)
+
+1. MiCuadre has a Settings toggle "Send income to FlowTa" (default off).
+2. On enable, MiCuadre checks FlowTa is installed; if not, it offers to install it.
+3. **Connect handshake**: MiCuadre opens a FlowTa screen where the user picks
+   - the income type (e.g. a "Trips" INCOME type),
+   - one FlowTa account for **CASH** trips and one for **TRANSFER** trips.
+   FlowTa stores this link and returns OK. MiCuadre never sees FlowTa ids.
+4. Each finished trip is sent through a FlowTa ContentProvider guarded by a **signature**
+   permission. FlowTa routes it to the account mapped to its payment method.
+5. FlowTa dedupes by `UNIQUE(source_app, external_id)`; a resend is a harmless `DUPLICATE`.
+
+### Shared contract v1 (`ContentResolver.call`)
+
+- Authority: `${applicationId}.integration` (so `com.j4x.flowta.integration`, `.staging` variant differs).
+- Permission: `com.j4x.flowta.permission.RECORD_INCOME`, `protectionLevel="signature"`.
+- Method `recordIncome`, extras:
+  `contract_version=1`, `source_app` (optional; the trusted source is always the caller's
+  `callingPackage`, and the extra, if present, must equal it or the reply is `INVALID`), `external_id` (MiCuadre trip id as string),
+  `payment_method` (`CASH` | `TRANSFER`), `amount_minor` (Long, COP x 100), `occurred_at` (epoch ms,
+  trip `endedAt`), `note` (e.g. "MiCuadre · Uber").
+- `android:permission` on `<provider>` does NOT guard `call()`: the provider checks
+  `checkCallingPermission(RECORD_INCOME)` explicitly and throws `SecurityException` otherwise.
+- Response bundle `status`: `OK` | `DUPLICATE` | `NOT_LINKED` | `INVALID` | `ERROR`
+  (`message` accompanies `INVALID`/`ERROR`). `ERROR` is an unexpected FlowTa-side failure and is
+  retryable by the caller; `INVALID` is not.
+  `NOT_LINKED` covers "never connected" and "mapped account/type was deleted".
+- Method `linkStatus` → `LINKED` | `NOT_LINKED` (lets MiCuadre show "reconnect").
+- Connect screen: explicit intent action `com.j4x.flowta.action.CONNECT_SOURCE`, same permission;
+  returns `RESULT_OK` once the mapping is saved.
+
+### Facts from exploration (2026-11-02)
+
+- FlowTa amounts are `Double` whole units; MiCuadre `amountMinor` is pesos x 100 → `amount = amount_minor / 100.0`.
+- `TransactionRepositoryImpl.add` inserts with random UUID + `System.currentTimeMillis()` and updates
+  the account balance in one transaction; the integration needs `created_at = occurred_at` and the
+  source columns, so it gets its own repository method that keeps the same balance logic.
+- Type and account ids are random UUIDs → the mapping must live in FlowTa.
+- No `migrations/` yet; `1.db` snapshot + `verifyMigrations` + `MigrationSnapshotTest` exist.
+- ContentProvider is not Hilt-injectable → `@EntryPoint` over the `SingletonComponent` database.
+- **Release build is unsigned**; staging uses the debug key. A signature permission only works if
+  both apps share the same signing key (see open decision D1).
+
+## Scope
+
+In: schema migration, link storage, record-income use case, provider, connect screen, unlink UI, docs.
+Out (v1): backfilling trips finished before connecting; propagating later edits/deletes of a trip in
+MiCuadre; other source apps; non-COP currency.
+
+## Open decisions
+
+- **D1 — signing key. RESOLVED 2026-11-02:** user approved signing FlowTa release with the same
+  keystore as MiCuadre (`~/.android-keys/micuadre-upload.jks`), configured from `local.properties`.
+  Debug builds already share `~/.android/debug.keystore`. Backup copy on the user's Desktop.
+
+## TDD
+
+Mode: strict (on), source: user global config. Runner: `./gradlew testDebugUnitTest`
+(JUnit4 + MockK + Turbine + SQLDelight JVM sqlite driver).
+
+## Tasks
+
+Route per task is recorded as `[route: …]`.
+
+- [x] **F1 Release signing** — `signingConfigs.release` from `local.properties`
+      (`FLOWTA_KEYSTORE_FILE`, `_KEYSTORE_PASSWORD`, `_KEY_ALIAS`, `_KEY_PASSWORD`), fail fast on partial
+      config, unsigned when absent. Depends on D1. Check: `assembleRelease` + `apksigner verify --print-certs`
+      shows the same SHA-1 as MiCuadre. [route: inline — single build file, pattern copied from MiCuadre]
+      Evidence 2026-11-02: both release APKs SHA-1 `71:54:82:13:3D:05:21:F1:37:E8:1B:46:74:A2:12:3E:65:86:6D:4A`.
+- [x] **F2 Migration 1 → 2** — `migrations/1.sqm`: `user_transaction` gets `source_app TEXT`,
+      `external_id TEXT` + `CREATE UNIQUE INDEX` on both; new table
+      `integration_link(source_app TEXT PK, income_type_id TEXT NOT NULL, cash_account_id TEXT NOT NULL,
+      transfer_account_id TEXT NOT NULL, created_at INTEGER NOT NULL)`. Update `.sq`, generate `2.db`,
+      `verifySqlDelightMigration`, extend `MigrationSnapshotTest` (1 → 2 keeps existing rows). [route: delegated — 4+ files: .sq, .sqm, snapshot, tests]
+      Evidence 2026-11-02: RED `table user_transaction has no column named source_app` (5/8 db tests);
+      GREEN generateDebugFlowTaDatabaseSchema, verifySqlDelightMigration (~8 min, CPU-bound ObjectDiffer),
+      testDebugUnitTest (114 tests), assembleDebug; parent re-ran the 8 db tests: green.
+- [x] **F3 Record external income (domain + data)** — `RecordExternalIncomeUseCase` returning
+      `Recorded | Duplicate | NotLinked | Invalid`; repository inserts with `created_at = occurredAt`,
+      source columns and balance update atomically; duplicate detected by the unique key. Tests over
+      the JVM sqlite driver: routes CASH/TRANSFER, duplicate no double balance, deleted account → NotLinked,
+      amount ≤ 0 → Invalid. [route: delegated — 2+ non-trivial files]
+      Evidence 2026-11-02: new `feature/integration` (ExternalIncomeRepository with one
+      `transactionWithResult`: duplicate check → account/type resolution → insertExternal → balance;
+      IntegrationLinkRepository get/save/delete/observe). Reset-all wipe also clears integration_link.
+      RED: compile failure on the missing API (`Unresolved reference 'repository'`). GREEN:
+      testDebugUnitTest + assembleDebug; parent re-ran RecordExternalIncomeTest (11), ResetAllDataTest
+      (12), DatabaseSchemaTest (2): green. F2 follow-ups done (test renamed; blank ids → Invalid).
+- [x] **F4 IntegrationProvider** — `call()`-only provider, `@EntryPoint` for the use case and link
+      repository, manifest `<permission>` + `<provider>` (exported, guarded). Bundle ↔ domain mapping
+      tested as pure functions. [route: delegated — 2+ non-trivial files]
+      Evidence 2026-11-02: `feature/integration/provider/` (IntegrationContract, IntegrationDispatcher pure,
+      IntegrationProvider thin adapter: explicit `checkCallingPermission` + `callingPackage` as source,
+      lazy EntryPoint, exceptions → ERROR). F3 race follow-up: catch + re-check → Duplicate.
+      RED: `ExternalIncomeRaceTest.lostRace_onUniqueIndex…` failed with `UNIQUE constraint failed`.
+      GREEN: testDebugUnitTest, assembleDebug, merged manifest shows signature permission + provider
+      `com.j4x.flowta.integration`. Parent re-ran IntegrationDispatcherTest (13), ExternalIncomeRaceTest (2),
+      RecordExternalIncomeTest (11): green. Not unit-testable: provider `call()` itself (Android) → device check.
+      Cross-app note: MiCuadre M1 also declares the same signature permission (install-order safety).
+- [x] **F5 Connect screen** — `ConnectSourceActivity` (Compose, theme-aware): income type picker
+      (INCOME types, create-new shortcut), CASH account, TRANSFER account; Save → upsert link →
+      `RESULT_OK`; Cancel → `RESULT_CANCELED`. ViewModel tests. [route: delegated — 2+ non-trivial files]
+      Evidence 2026-11-02: activity guarded by the signature permission, source = `callingPackage`
+      (null → RESULT_CANCELED); preselection: existing link > first CASH / first DIGITAL_WALLET else BANK;
+      "Nuevo tipo…" prefilled "Carreras" via `CreateIncomeTypeUseCase` (reuses a same-name INCOME type;
+      finds the new id by diffing ids because `TransactionTypeRepository.add` returns no id).
+      RED: compile failure `Unresolved reference 'CreateIncomeTypeUseCase'`. GREEN: parent re-ran
+      testDebugUnitTest (158 tests, 0 failures) + assembleDebug. Emulator: `am start` from shell →
+      `SecurityException … requires com.j4x.flowta.permission.RECORD_INCOME`. Visual check pending a
+      same-key caller (MiCuadre M4). ~600 authored lines (≈220 tests).
+- [x] **F6 Connected apps / unlink** — in Profile/Settings, show the MiCuadre link (accounts per
+      method) with "Disconnect" (deletes the link → future calls get `NOT_LINKED`). [route: delegated — 2+ non-trivial files]
+      Evidence 2026-11-02: "Apps conectadas" card in ProfileScreen (`ConnectedAppsViewModel`, labels via
+      `AppLabelResolver` + `<queries>` for com.micuadre.app[.debug]); deleted refs shown in error color;
+      confirm dialog → delete. F5 follow-ups fixed (link-load error, re-validate selections, collect
+      errors). RED: compile failure on missing `observeAll`/`AppLabelResolver`/`ConnectedAppsViewModel`.
+      GREEN: parent re-ran testDebugUnitTest (177, 0 failures) + assembleDebug. Emulator: seeded two links
+      (one with a deleted account) → card shows "MiCuadre", "Cuenta eliminada" + reconnect hint; Disconnect
+      dialog → confirm → that row deleted in DB and gone from the card. Test links removed afterwards.
+      ~700 authored lines (≈300 tests).
+- [x] **F7 Docs** — CLAUDE.md (schema v2, contract, signing), README section. [route: inline]
+
+## Acceptance criteria
+
+- Finishing a cash trip in MiCuadre adds an income in the CASH-mapped account with the trip time;
+  a transfer trip goes to the TRANSFER-mapped account; balances update.
+- Sending the same trip twice changes nothing the second time.
+- An app signed with another key cannot call the provider or open the connect screen.
+- Existing users upgrade from schema 1 with all data intact.
+
+## Progress
+
+- 2026-11-02: plan written; exploration done.
+- 2026-11-02: D1 resolved; F1 done (61d6b79). Branch renamed to `feat/micuadre-integration`.
+- 2026-11-02: F2 done (schema v2, 47fdd9a). Review (F1+F2, 4 lenses, risk high): granted → approved,
+  acknowledged (lineage review-2d2d63d3f2a7136c); reviewed boundary = 47fdd9a. Non-blocking follow-ups
+  to fold into F3: rename `DatabaseSchemaTest.schemaVersion_isOne_untilFirstMigrationIsAdded` (asserts 2);
+  the unique index only dedupes when BOTH source_app and external_id are non-null → F3 must reject
+  external rows missing either.
+
+- 2026-11-02: F3 done (867d855). Review (1 lens reliability, risk medium, slice budget): granted →
+  approved, acknowledged (lineage review-52ccaabdd6902840); reviewed boundary = 867d855. Follow-ups to
+  fold into F4: a concurrent second insert that loses the race hits the unique index and throws instead
+  of returning `Duplicate` → map the constraint violation to `Duplicate`; add a test for it.
+
+- 2026-11-02: F4 done (47ad062). Review (reliability, medium): approved + acknowledged (lineage
+  review-73ebdb5886e53775). Its WARNING "Long contract_version rejected" was a real bug → fixed with
+  TDD in 3dc8bc0 (RED `expected:<[OK]> but was:<[INVALID]>`; 141 unit tests green). Remaining
+  non-blocking notes: provider guard has no automated test (covered by emulator check below).
+- 2026-11-02 emulator (Pixel_6, API 37), user-requested:
+  - Upgrade v1 → v2 over the user's emulator data (3 accounts, 194 transactions, 23 types; backup in
+    `Documents/FlowTa-backups/2026-11-02-pre-v2`): `user_version` 2, balances and transaction sum
+    identical, `integration_link` + unique index present, app launches, no crash in logcat.
+  - Unsigned caller (`adb shell content call`, uid 2000) → `SecurityException: Permission Denial …
+    requires com.j4x.flowta.permission.RECORD_INCOME`; nothing written.
+  - NOT yet verified on device: positive path (OK / DUPLICATE / routing / NOT_LINKED) — needs a
+    same-key caller (MiCuadre M5) and a link (F5). `run-as … content call` is blocked by Android
+    (`ACCESS_CONTENT_PROVIDERS_EXTERNALLY`). Planned as the end-to-end check after M5.
+
+- 2026-11-02: F5 done (447e450). Review (3dc8bc0 + F5, reliability, medium): approved + acknowledged
+  (lineage review-79fc29e658daf24d); reviewed boundary = 447e450. Non-blocking follow-ups for F6:
+  ConnectSourceViewModel swallows a failed `links.get` silently (reconnect falls back to defaults with
+  no feedback); preselection runs only on the first emission, so a selected account deleted while the
+  screen is open stays selected → re-validate selections on every emission; the accounts/types
+  `collect` has no error handling.
+
+- 2026-11-02: F6 done (e62ede0). Review (reliability, medium): approved + acknowledged (lineage
+  review-683eb1dea985079c); reviewed boundary = e62ede0. Its WARNING (trailing space trimmed in the
+  "Efectivo → " string resources) was visible on the emulator → fixed by quoting the strings; re-checked
+  on the emulator ("Efectivo → Efectivo"). Remaining suggestions (labels resolved on main thread, error
+  ends the card flow) left as later polish.
+
+- 2026-11-02: F7 docs — README (feature, architecture, release signing, privacy, status) and local CLAUDE.md (schema v2, integration, signing). Passive docs: structural readback only. Commit 12204f4. Assess d2639db..12204f4 (base e62ede0):
+  medium, `review_due` false (`under_budget`) → stays pending in the slice.
+
+## Next step
+
+FlowTa side complete (F1–F7). Next: MiCuadre side (M1–M6), then end-to-end emulator check.

@@ -1,0 +1,11 @@
+-- v1 -> v2: MiCuadre integration. NULL source_app/external_id (manual entries) stay non-unique.
+ALTER TABLE user_transaction ADD COLUMN source_app TEXT;
+ALTER TABLE user_transaction ADD COLUMN external_id TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS user_transaction_source_external ON user_transaction(source_app, external_id);
+CREATE TABLE IF NOT EXISTS integration_link (
+    source_app          TEXT    NOT NULL PRIMARY KEY,
+    income_type_id      TEXT    NOT NULL,
+    cash_account_id     TEXT    NOT NULL,
+    transfer_account_id TEXT    NOT NULL,
+    created_at          INTEGER NOT NULL
+);

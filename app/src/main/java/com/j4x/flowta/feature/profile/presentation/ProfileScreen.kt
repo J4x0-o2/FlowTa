@@ -60,6 +60,13 @@ import com.j4x.flowta.feature.accounts.presentation.AccountEffect
 import com.j4x.flowta.feature.accounts.presentation.AccountIntent
 import com.j4x.flowta.feature.accounts.presentation.AccountViewModel
 import com.j4x.flowta.feature.accounts.presentation.NewAccountBottomSheet
+import androidx.compose.ui.res.stringResource
+import com.j4x.flowta.R
+import com.j4x.flowta.feature.integration.presentation.ConnectedAppsCard
+import com.j4x.flowta.feature.integration.presentation.ConnectedAppsEffect
+import com.j4x.flowta.feature.integration.presentation.ConnectedAppsIntent
+import com.j4x.flowta.feature.integration.presentation.ConnectedAppsViewModel
+import com.j4x.flowta.feature.integration.presentation.DisconnectAppDialog
 import com.j4x.flowta.feature.settings.presentation.SettingsBottomSheet
 import com.j4x.flowta.feature.types.domain.model.TransactionType
 import com.j4x.flowta.feature.types.presentation.TypeChip
@@ -76,8 +83,11 @@ fun ProfileScreen(navController: NavController) {
     val accountViewModel: AccountViewModel = hiltViewModel()
     val typesViewModel: TypesViewModel = hiltViewModel()
 
+    val connectedAppsViewModel: ConnectedAppsViewModel = hiltViewModel()
+
     val accountState by accountViewModel.state.collectAsStateWithLifecycle()
     val typesState by typesViewModel.state.collectAsStateWithLifecycle()
+    val connectedApps by connectedAppsViewModel.state.collectAsStateWithLifecycle()
 
     var activeSheet by remember { mutableStateOf<ActiveSheet?>(null) }
     var showLogoutDialog by remember { mutableStateOf(false) }
@@ -90,6 +100,14 @@ fun ProfileScreen(navController: NavController) {
                     navController.navigate(Screen.AccountDetail().createRoute(effect.accountId))
                 is AccountEffect.ShowError ->
                     snackbarHostState.showSnackbar(effect.message)
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        connectedAppsViewModel.effects.collect { effect ->
+            when (effect) {
+                is ConnectedAppsEffect.ShowError -> snackbarHostState.showSnackbar(effect.message)
             }
         }
     }
@@ -172,6 +190,23 @@ fun ProfileScreen(navController: NavController) {
                 }
             }
 
+            // Apps conectadas (only when at least one link exists)
+            if (connectedApps.apps.isNotEmpty()) {
+                item {
+                    Text(
+                        stringResource(R.string.connected_apps_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                item {
+                    ConnectedAppsCard(
+                        apps = connectedApps.apps,
+                        onDisconnect = { connectedAppsViewModel.onIntent(ConnectedAppsIntent.RequestDisconnect(it)) }
+                    )
+                }
+            }
+
             // Categorías
             item {
                 Text("Categorías", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -219,6 +254,14 @@ fun ProfileScreen(navController: NavController) {
 
             item { Spacer(Modifier.height(8.dp)) }
         }
+    }
+
+    connectedApps.pendingDisconnect?.let { app ->
+        DisconnectAppDialog(
+            app = app,
+            onConfirm = { connectedAppsViewModel.onIntent(ConnectedAppsIntent.ConfirmDisconnect) },
+            onDismiss = { connectedAppsViewModel.onIntent(ConnectedAppsIntent.DismissDisconnect) }
+        )
     }
 
     if (showLogoutDialog) {

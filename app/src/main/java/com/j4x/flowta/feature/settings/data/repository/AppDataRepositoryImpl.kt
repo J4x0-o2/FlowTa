@@ -3,6 +3,7 @@ package com.j4x.flowta.feature.settings.data.repository
 import com.j4x.flowta.database.AccountQueries
 import com.j4x.flowta.database.GoalContributionQueries
 import com.j4x.flowta.database.GoalQueries
+import com.j4x.flowta.database.IntegrationLinkQueries
 import com.j4x.flowta.database.InternalTransferQueries
 import com.j4x.flowta.database.TransactionQueries
 import com.j4x.flowta.database.TransactionTypeQueries
@@ -17,7 +18,8 @@ class AppDataRepositoryImpl @Inject constructor(
     private val transferQueries: InternalTransferQueries,
     private val typeQueries: TransactionTypeQueries,
     private val goalQueries: GoalQueries,
-    private val contributionQueries: GoalContributionQueries
+    private val contributionQueries: GoalContributionQueries,
+    private val linkQueries: IntegrationLinkQueries
 ) : AppDataRepository {
 
     override suspend fun wipeAll(): Result<Unit> =
@@ -27,6 +29,7 @@ class AppDataRepositoryImpl @Inject constructor(
                     // Children first so foreign keys never dangle: rows referencing goal/account/type
                     // go before the rows they reference.
                     contributionQueries.deleteAll()
+                    linkQueries.deleteAll()
                     transactionQueries.deleteAll()
                     transferQueries.deleteAll()
                     goalQueries.deleteAll()

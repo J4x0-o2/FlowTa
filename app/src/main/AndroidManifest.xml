@@ -5,6 +5,18 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <permission
+        android:name="com.j4x.flowta.permission.RECORD_INCOME"
+        android:description="@string/permission_record_income_description"
+        android:label="@string/permission_record_income_label"
+        android:protectionLevel="signature" />
+
+    <!-- Package visibility so Profile can show the source apps' labels. -->
+    <queries>
+        <package android:name="com.micuadre.app" />
+        <package android:name="com.micuadre.app.debug" />
+    </queries>
+
     <application
         android:name=".FlowTaApp"
         android:allowBackup="true"
@@ -36,6 +48,23 @@
                 android:value="androidx.startup"
                 tools:node="remove" />
         </provider>
+
+        <activity
+            android:name=".feature.integration.presentation.ConnectSourceActivity"
+            android:exported="true"
+            android:permission="com.j4x.flowta.permission.RECORD_INCOME"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="com.j4x.flowta.action.CONNECT_SOURCE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <provider
+            android:name=".feature.integration.provider.IntegrationProvider"
+            android:authorities="${applicationId}.integration"
+            android:exported="true"
+            android:permission="com.j4x.flowta.permission.RECORD_INCOME" />
 
         <receiver
             android:name=".core.receiver.BootReceiver"
