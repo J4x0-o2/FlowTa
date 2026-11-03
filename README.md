@@ -4,6 +4,16 @@
 
 ![FlowTa: pantalla principal en tema claro y oscuro](docs/images/cover.png)
 
+## Cómo instalar
+
+FlowTa se distribuye desde las [releases de GitHub](https://github.com/J4x0-o2/FlowTa/releases/latest)
+(versión actual **1.1.0**). Requiere Android 10 o superior. Descarga `FlowTa-<versión>.apk`, ábrelo y
+permite la instalación desde esa fuente cuando Android lo pida; también puedes agregar la URL del
+repositorio en [Obtainium](https://github.com/ImranR98/Obtainium) para recibir avisos de versiones nuevas.
+
+Desde la 1.1.0 la app se firma con el mismo certificado que MiCuadre (necesario para la integración).
+Si tienes instalada una versión firmada con otro certificado, Android no deja actualizarla encima.
+
 ## Qué hace
 
 - **Registro en burbujas.** Ingresos, gastos y transferencias entre cuentas desde una sola hoja con tres pestañas. Cada movimiento tiene categoría, nota opcional y, en los ingresos, una fuente.
