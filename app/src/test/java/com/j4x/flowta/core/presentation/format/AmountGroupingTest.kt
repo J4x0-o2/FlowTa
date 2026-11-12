@@ -19,6 +19,42 @@ class AmountGroupingTest {
     }
 
     @Test
+    fun sanitize_cop_typedMarkMidNumber_keepsAllDigits() {
+        // "1234" with a "." typed between 2 and 3.
+        assertEquals("1234", sanitizeAmountInput("12.34", CurrencyCode.COP, previous = "1234"))
+        assertEquals("1234", sanitizeAmountInput("12,34", CurrencyCode.COP, previous = "1234"))
+    }
+
+    @Test
+    fun sanitize_cop_typedMarkThenDigitsAtEnd_keepsAllDigits() {
+        assertEquals("1234", sanitizeAmountInput("1234.", CurrencyCode.COP, previous = "1234"))
+        assertEquals("12345", sanitizeAmountInput("12345", CurrencyCode.COP, previous = "1234"))
+    }
+
+    @Test
+    fun sanitize_cop_pastedFraction_isStillDropped() {
+        assertEquals("1234", sanitizeAmountInput("1234.56", CurrencyCode.COP, previous = ""))
+        assertEquals("1234", sanitizeAmountInput("1234.56", CurrencyCode.COP, previous = "9"))
+        assertEquals("1234", sanitizeAmountInput("1234.56", CurrencyCode.COP))
+    }
+
+    @Test
+    fun sanitize_usd_typing_isUnchanged() {
+        assertEquals("12.", sanitizeAmountInput("12.", CurrencyCode.USD, previous = "12"))
+        assertEquals("12.5", sanitizeAmountInput("12.5", CurrencyCode.USD, previous = "12."))
+        assertEquals("12.34", sanitizeAmountInput("12.345", CurrencyCode.USD, previous = "12.34"))
+        assertEquals("12.34", sanitizeAmountInput("12.34.", CurrencyCode.USD, previous = "12.34"))
+    }
+
+    @Test
+    fun sanitize_usd_typedMarkMidNumber_neverDropsExistingDigits() {
+        // "1234" + "." between 1 and 2 would become "1.23" and lose the "4": the mark is ignored.
+        assertEquals("1234", sanitizeAmountInput("1.234", CurrencyCode.USD, previous = "1234"))
+        // Fits in two fraction digits: nothing lost, the mark is kept.
+        assertEquals("12.34", sanitizeAmountInput("12.34", CurrencyCode.USD, previous = "1234"))
+    }
+
+    @Test
     fun sanitize_usd_keepsOneDecimalMarkNormalizedToDot_andTwoDecimals() {
         assertEquals("1234.56", sanitizeAmountInput("1234.56", CurrencyCode.USD))
         assertEquals("12.5", sanitizeAmountInput("12,5", CurrencyCode.USD))

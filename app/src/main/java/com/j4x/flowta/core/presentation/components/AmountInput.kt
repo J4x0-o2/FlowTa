@@ -37,7 +37,7 @@ fun AmountInput(
 
     OutlinedTextField(
         value = value,
-        onValueChange = { onValueChange(sanitizeAmountInput(it, code)) },
+        onValueChange = { onValueChange(sanitizeAmountInput(it, code, previous = value)) },
         visualTransformation = remember { AmountVisualTransformation() },
         label = label?.let { { Text(it) } },
         placeholder = { Text(placeholder, style = textStyle) },

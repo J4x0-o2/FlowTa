@@ -13,6 +13,11 @@ private const val MAX_FRACTION_DIGITS = 2
 /**
  * Cleans text typed or pasted into an amount field so the raw value never contains grouping.
  *
+ * [previous] is the raw value before the edit. When given, a single-character edit is treated as
+ * typing and never deletes digits (COP: a typed mark is simply dropped; USD/EUR: a mark that would
+ * push digits out of the two-digit fraction is ignored). Without it, or for a multi-character
+ * insertion, the text is handled as a paste.
+ *
  * - COP: digits only. A pasted trailing fraction ("1234.56", "1.234,5": a mark followed by 1-2
  *   digits at the very end) is dropped, never merged into the integer; thousands grouping
  *   ("5.000", "1,234,567": groups of exactly 3 digits) becomes the integer.
@@ -25,10 +30,17 @@ private const val MAX_FRACTION_DIGITS = 2
  * The result is always accepted by [parseAmount] once complete (a trailing "." is the only
  * transient state and parses as the integer typed so far).
  */
-fun sanitizeAmountInput(text: String, code: CurrencyCode): String {
-    if (code == CurrencyCode.COP) return sanitizeInteger(text)
-    return sanitizePastedGrouping(text) ?: sanitizeTyped(text)
+fun sanitizeAmountInput(text: String, code: CurrencyCode, previous: String? = null): String {
+    val typed = previous != null && !isPaste(text, previous)
+    if (code == CurrencyCode.COP) return if (typed) text.digits() else sanitizeInteger(text)
+    if (!typed) return sanitizePastedGrouping(text) ?: sanitizeTyped(text)
+    val result = sanitizeTyped(text)
+    // A single typed character must never delete digits that were already there.
+    return if (result.digits().length < previous!!.digits().length) previous else result
 }
+
+/** A paste inserts more than one character at once; a single keystroke grows the text by <= 1. */
+private fun isPaste(text: String, previous: String) = text.length - previous.length > 1
 
 private fun String.digits() = filter { it.isDigit() }
 
