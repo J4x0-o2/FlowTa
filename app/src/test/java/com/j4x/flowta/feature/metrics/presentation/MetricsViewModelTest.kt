@@ -11,7 +11,11 @@ import com.j4x.flowta.feature.metrics.domain.model.DateRange
 import com.j4x.flowta.feature.metrics.domain.model.IncomeSourceTotal
 import com.j4x.flowta.feature.metrics.domain.model.MetricsPeriodType
 import com.j4x.flowta.feature.metrics.domain.repository.MetricsRepository
+import com.j4x.flowta.feature.metrics.domain.usecase.ObserveColorOrderUseCase
 import com.j4x.flowta.feature.metrics.domain.usecase.ObserveMetricsUseCase
+import com.j4x.flowta.feature.types.domain.model.TransactionType
+import com.j4x.flowta.feature.types.domain.model.TypeCategory
+import com.j4x.flowta.feature.types.domain.repository.TransactionTypeRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -64,6 +68,17 @@ class MetricsViewModelTest {
         }
     }
 
+    private val typeList = MutableStateFlow<List<TransactionType>>(emptyList())
+
+    private val types = object : TransactionTypeRepository {
+        override fun getAll(): Flow<List<TransactionType>> = typeList
+        override fun getByCategory(category: String): Flow<List<TransactionType>> =
+            typeList.map { list -> list.filter { it.category.name == category } }
+        override suspend fun add(name: String, category: String) = Result.success(Unit)
+        override suspend fun seedIfEmpty(types: List<Pair<String, String>>) = Result.success(Unit)
+        override suspend fun delete(id: String) = Result.success(Unit)
+    }
+
     @Before
     fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
 
@@ -79,6 +94,7 @@ class MetricsViewModelTest {
     ) = MetricsViewModel(
         handle,
         ObserveMetricsUseCase(history, metrics),
+        ObserveColorOrderUseCase(types),
         DayTicker(VirtualClock(testScheduler, Instant.ofEpochMilli(millis(now)), bogota))
     )
 
@@ -330,6 +346,23 @@ class MetricsViewModelTest {
             val state = expectMostRecentItem()
             assertTrue(state.metrics!!.incomeSources.isEmpty())
             assertTrue(requestedSourceRanges.isEmpty())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun exposesDistinctStableColorsForExpenseCategoriesAndSources() = runTest {
+        typeList.value = listOf(
+            TransactionType("food", "Alimentación", TypeCategory.EXPENSE, 1),
+            TransactionType("home", "Hogar", TypeCategory.EXPENSE, 2),
+            TransactionType("job", "Trabajo", TypeCategory.INCOME_SOURCE, 3)
+        )
+        val vm = viewModel()
+
+        vm.state.test {
+            val colors = expectMostRecentItem().colors
+            assertTrue(colors.category("food") != colors.category("home"))
+            assertTrue(colors.incomeSource("job") != colors.incomeSource(null))
             cancelAndIgnoreRemainingEvents()
         }
     }

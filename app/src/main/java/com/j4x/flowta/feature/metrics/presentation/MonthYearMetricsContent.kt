@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.dp
 import com.j4x.flowta.core.presentation.LocalCurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencySymbol
 import com.j4x.flowta.core.presentation.theme.flowColors
-import com.j4x.flowta.core.presentation.theme.incomeSourceColor
+import com.j4x.flowta.core.presentation.theme.MetricsColors
 import com.j4x.flowta.feature.history.presentation.formatMoney
 import com.j4x.flowta.feature.metrics.domain.model.MetricsPeriodType
 import com.j4x.flowta.feature.metrics.domain.model.PeriodMetrics
@@ -44,7 +44,7 @@ private val RingSize = 72.dp
 private val RingStroke = 8.dp
 
 /** Cards of the Month and Year tabs (same layout): net hero with savings ring, categories, income sources. */
-internal fun LazyListScope.monthYearMetricsItems(type: MetricsPeriodType, metrics: PeriodMetrics) {
+internal fun LazyListScope.monthYearMetricsItems(type: MetricsPeriodType, metrics: PeriodMetrics, colors: MetricsColors) {
     val isYear = type == MetricsPeriodType.YEAR
     item { MonthYearHeroCard(type, metrics) }
     if (metrics.totals.count == 0) {
@@ -59,8 +59,8 @@ internal fun LazyListScope.monthYearMetricsItems(type: MetricsPeriodType, metric
         }
         return
     }
-    item { CategoriesDonutCard(metrics) }
-    item { IncomeSourcesCard(metrics) }
+    item { CategoriesDonutCard(metrics, colors) }
+    item { IncomeSourcesCard(metrics, colors) }
 }
 
 @Composable
@@ -141,12 +141,13 @@ private fun SavingsRing(state: SavingsRingState) {
 }
 
 @Composable
-private fun CategoriesDonutCard(metrics: PeriodMetrics) {
+private fun CategoriesDonutCard(metrics: PeriodMetrics, colors: MetricsColors) {
     val symbol = LocalCurrencySymbol.current
     val code = LocalCurrencyCode.current
     MetricsCard(title = "Gastos por categoría") {
         ExpensesDonutChart(
             categories = metrics.categories,
+            colors = colors,
             centerText = formatCompactMoney(metrics.expense, symbol, code),
             centerCaption = "gastado"
         )
@@ -154,7 +155,7 @@ private fun CategoriesDonutCard(metrics: PeriodMetrics) {
 }
 
 @Composable
-private fun IncomeSourcesCard(metrics: PeriodMetrics) {
+private fun IncomeSourcesCard(metrics: PeriodMetrics, colors: MetricsColors) {
     val symbol = LocalCurrencySymbol.current
     val code = LocalCurrencyCode.current
     val sources = metrics.incomeSources
@@ -169,7 +170,7 @@ private fun IncomeSourcesCard(metrics: PeriodMetrics) {
                     modifier = Modifier
                         .weight(source.total.toFloat())
                         .height(12.dp)
-                        .background(incomeSourceColor(source.id))
+                        .background(colors.incomeSource(source.id))
                 )
             }
         }
@@ -180,7 +181,7 @@ private fun IncomeSourcesCard(metrics: PeriodMetrics) {
                         modifier = Modifier
                             .size(10.dp)
                             .clip(RoundedCornerShape(2.dp))
-                            .background(incomeSourceColor(source.id))
+                            .background(colors.incomeSource(source.id))
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(

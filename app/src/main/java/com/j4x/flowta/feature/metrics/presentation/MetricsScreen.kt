@@ -47,7 +47,7 @@ import androidx.navigation.NavController
 import com.j4x.flowta.core.presentation.LocalCurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencySymbol
 import com.j4x.flowta.core.presentation.theme.Indigo500
-import com.j4x.flowta.core.presentation.theme.categoryColor
+import com.j4x.flowta.core.presentation.theme.MetricsColors
 import com.j4x.flowta.core.presentation.theme.flowColors
 import com.j4x.flowta.feature.metrics.domain.model.CategoryExpense
 import com.j4x.flowta.feature.metrics.domain.model.MetricsPeriodType
@@ -103,9 +103,10 @@ fun MetricsScreen(
                 when (state.periodType) {
                     MetricsPeriodType.DAY -> item { NetCard(state.periodType.netLabel(), metrics.net) }
                     MetricsPeriodType.MONTH,
-                    MetricsPeriodType.YEAR -> monthYearMetricsItems(state.periodType, metrics)
+                    MetricsPeriodType.YEAR -> monthYearMetricsItems(state.periodType, metrics, state.colors)
                     MetricsPeriodType.WEEK -> weekMetricsItems(
                         metrics = metrics,
+                        colors = state.colors,
                         isCurrentWeek = period != null && today != null && period.isCurrent(today),
                         selectedDay = state.selectedDay,
                         onSelectDay = { viewModel.onIntent(MetricsIntent.SelectDay(it)) }
@@ -223,11 +224,16 @@ internal fun MetricsCard(
 }
 
 /**
- * Donut of expenses by category, colored by [categoryColor], with [centerText] / [centerCaption] in the
+ * Donut of expenses by category, colored by [colors], with [centerText] / [centerCaption] in the
  * hole and a legend of colored square, name and bold amount.
  */
 @Composable
-internal fun ExpensesDonutChart(categories: List<CategoryExpense>, centerText: String, centerCaption: String) {
+internal fun ExpensesDonutChart(
+    categories: List<CategoryExpense>,
+    colors: MetricsColors,
+    centerText: String,
+    centerCaption: String
+) {
     val donut   = remember(categories) { computeDonutData(categories) }
     val nonZero = donut.slices
     val total   = donut.total
@@ -260,7 +266,7 @@ internal fun ExpensesDonutChart(categories: List<CategoryExpense>, centerText: S
                 nonZero.forEach { cat ->
                     val sweep = (cat.total / total * 360f).toFloat()
                     drawArc(
-                        color      = categoryColor(cat.typeId),
+                        color      = colors.category(cat.typeId),
                         startAngle = startAngle,
                         sweepAngle = sweep,
                         useCenter  = true,
@@ -297,7 +303,7 @@ internal fun ExpensesDonutChart(categories: List<CategoryExpense>, centerText: S
                         modifier = Modifier
                             .size(10.dp)
                             .clip(RoundedCornerShape(2.dp))
-                            .background(categoryColor(cat.typeId))
+                            .background(colors.category(cat.typeId))
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
