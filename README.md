@@ -7,12 +7,22 @@
 ## Cómo instalar
 
 FlowTa se distribuye desde las [releases de GitHub](https://github.com/J4x0-o2/FlowTa/releases/latest)
-(versión actual **1.1.0**). Requiere Android 10 o superior. Descarga `FlowTa-<versión>.apk`, ábrelo y
+(versión actual **1.2.0**). Requiere Android 10 o superior. Descarga `FlowTa-<versión>.apk`, ábrelo y
 permite la instalación desde esa fuente cuando Android lo pida; también puedes agregar la URL del
 repositorio en [Obtainium](https://github.com/ImranR98/Obtainium) para recibir avisos de versiones nuevas.
 
 Desde la 1.1.0 la app se firma con el mismo certificado que MiCuadre (necesario para la integración).
 Si tienes instalada una versión firmada con otro certificado, Android no deja actualizarla encima.
+
+## Novedades en 1.2.0
+
+- **Burbujas agrupadas.** Varios movimientos seguidos del mismo tipo se juntan en una burbuja con la cantidad (×N), el total, las categorías y el rango de fechas; al tocarla se despliega.
+- **Métricas nuevas.** Períodos de calendario (Día, Semana, Mes, Año) con flechas para ir hacia atrás. Día muestra el neto; Semana compara con la semana anterior y deja tocar cada día para ver su ingreso y su gasto; Mes y Año muestran el anillo de ahorro, los gastos por categoría y los ingresos por fuente. Cada categoría tiene su propio color, igual en todas las vistas.
+- **Historial más claro.** Cada mes y cada semana muestran ingresos, gastos y una sola barra con qué parte de lo ganado se gastó (en rojo si se gastó más de lo ganado).
+- **Montos más cómodos.** El separador de miles aparece dentro del campo mientras escribes, y pegar montos con separadores o decimales ya no los altera.
+- **Barra inferior.** "Registrar transacción..." queda por encima de la barra de navegación por gestos de Android.
+
+Actualiza encima de la 1.1.0 sin perder datos: el esquema de la base no cambia y la conexión con MiCuadre se mantiene.
 
 ## Novedades en 1.1.0
 
