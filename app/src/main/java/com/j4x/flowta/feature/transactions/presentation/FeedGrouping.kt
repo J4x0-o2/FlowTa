@@ -1,0 +1,95 @@
+package com.j4x.flowta.feature.transactions.presentation
+
+/** Flow type label shared with the bubble colors: INCOME, EXPENSE or TRANSFER. */
+val FeedItem.flowType: String
+    get() = when (this) {
+        is FeedItem.Tx   -> transaction.flowType
+        is FeedItem.Xfer -> "TRANSFER"
+    }
+
+val FeedItem.amount: Double
+    get() = when (this) {
+        is FeedItem.Tx   -> transaction.amount
+        is FeedItem.Xfer -> transfer.amount
+    }
+
+/** Category name for movements, "from -> to" route for transfers (same label the bubble shows). */
+val FeedItem.categoryLabel: String
+    get() = when (this) {
+        is FeedItem.Tx   -> transaction.typeName
+        is FeedItem.Xfer -> "${transfer.fromAccountName} → ${transfer.toAccountName}"
+    }
+
+/** One row of the main feed: a lone movement or a collapsed streak of the same flow type. */
+sealed interface FeedEntry {
+    /** Stable LazyColumn key and expansion key. */
+    val key: String
+
+    data class Single(val item: FeedItem) : FeedEntry {
+        override val key: String get() = item.id
+    }
+
+    /** [items] keep feed order (newest first). */
+    data class Group(val items: List<FeedItem>) : FeedEntry {
+        init {
+            require(items.size >= 2) { "A group needs at least two movements" }
+        }
+
+        val flowType: String = items.first().flowType
+        val count: Int = items.size
+        val total: Double = items.sumOf { it.amount }
+        val categories: List<String> = items.map { it.categoryLabel }.distinct()
+        val fromMillis: Long = items.minOf { it.createdAt }
+        val toMillis: Long = items.maxOf { it.createdAt }
+
+        // Anchored on the oldest movement: newer arrivals join the streak without changing the key.
+        override val key: String = "group_${items.last().id}"
+    }
+}
+
+/** Collapses runs of 2+ consecutive same-flow movements, preserving feed order. */
+fun groupFeed(items: List<FeedItem>): List<FeedEntry> {
+    val entries = ArrayList<FeedEntry>()
+    var run = ArrayList<FeedItem>()
+
+    fun flush() {
+        when (run.size) {
+            0    -> Unit
+            1    -> entries += FeedEntry.Single(run[0])
+            else -> entries += FeedEntry.Group(run)
+        }
+        run = ArrayList()
+    }
+
+    for (item in items) {
+        if (run.isNotEmpty() && run[0].flowType != item.flowType) flush()
+        run += item
+    }
+    flush()
+    return entries
+}
+
+/**
+ * Carries expanded group keys over a feed change. A key that still exists is kept; a key whose
+ * group disappeared (e.g. its oldest movement was deleted, which changes the key) moves to the
+ * current group that shares any movement with the previous one; otherwise it is dropped.
+ *
+ * While nothing has loaded yet (both [previous] and [current] are empty) the keys are kept as is,
+ * so expansion restored after a configuration change or process death survives the feed's
+ * initial empty emission. A feed that becomes empty after having data still prunes to empty.
+ */
+fun reconcileExpansion(
+    expanded: List<String>,
+    previous: List<FeedEntry>,
+    current: List<FeedEntry>
+): List<String> {
+    if (previous.isEmpty() && current.isEmpty()) return expanded
+    val currentGroups = current.filterIsInstance<FeedEntry.Group>()
+    val currentKeys = currentGroups.map { it.key }.toSet()
+    val previousByKey = previous.filterIsInstance<FeedEntry.Group>().associateBy { it.key }
+    return expanded.mapNotNull { key ->
+        if (key in currentKeys) return@mapNotNull key
+        val ids = previousByKey[key]?.items?.map { it.id }?.toSet() ?: return@mapNotNull null
+        currentGroups.firstOrNull { g -> g.items.any { it.id in ids } }?.key
+    }.distinct()
+}
