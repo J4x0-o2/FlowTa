@@ -119,7 +119,6 @@ fun NewAccountBottomSheet(
                 AmountInput(
                     value = balanceText,
                     onValueChange = { balanceText = it },
-                    previewLabel = "Saldo",
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -132,7 +131,6 @@ fun NewAccountBottomSheet(
                         value = metaText,
                         onValueChange = { metaText = it },
                         placeholder = "Monto objetivo",
-                        previewLabel = "Meta",
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
