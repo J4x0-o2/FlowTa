@@ -32,8 +32,8 @@ fun AmountInput(
 ) {
     val code = LocalCurrencyCode.current
     val symbol = LocalCurrencySymbol.current
-    // A trailing decimal mark ("12.") is a transient typing state, not an error.
-    val invalid = parseAmount(value.removeSuffix("."), code) == null
+    // parseAmount reads a trailing decimal mark ("12.") as 12, so submit and this hint agree.
+    val invalid = parseAmount(value, code) == null
 
     OutlinedTextField(
         value = value,

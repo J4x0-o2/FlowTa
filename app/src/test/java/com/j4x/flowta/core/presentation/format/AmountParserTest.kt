@@ -58,6 +58,13 @@ class AmountParserTest {
     }
 
     @Test
+    fun parseAmount_usd_trailingDecimalMarkIsTheIntegerBeingTyped() {
+        assertEquals(12.0, usd("12.")!!, 0.0)
+        assertEquals(12.0, usd("12,")!!, 0.0)
+        assertNull(cop("12."))
+    }
+
+    @Test
     fun parseAmount_usd_rejectsAmbiguousOrMalformedInput() {
         assertNull(usd("5.000"))      // 5 or 5000? do not guess
         assertNull(usd("5,000"))
@@ -65,7 +72,8 @@ class AmountParserTest {
         assertNull(usd("1.234,567"))
         assertNull(usd("1,234.5.6"))
         assertNull(usd("1.000.00"))
-        assertNull(usd("5."))
+        assertNull(usd("5.."))
+        assertNull(usd("1,234."))
         assertNull(usd("abc"))
         assertNull(usd("-3"))
     }

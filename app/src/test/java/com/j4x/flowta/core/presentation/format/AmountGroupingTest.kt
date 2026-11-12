@@ -29,6 +29,38 @@ class AmountGroupingTest {
     }
 
     @Test
+    fun sanitize_cop_dropsPastedFractionInsteadOfInflating() {
+        assertEquals("1234", sanitizeAmountInput("1234.56", CurrencyCode.COP))
+        assertEquals("1234", sanitizeAmountInput("1234,5", CurrencyCode.COP))
+        assertEquals("1234", sanitizeAmountInput("1.234,56", CurrencyCode.COP))
+        assertEquals("5", sanitizeAmountInput("5.", CurrencyCode.COP))
+    }
+
+    @Test
+    fun sanitize_cop_keepsThousandsGroupingAsInteger() {
+        assertEquals("1234", sanitizeAmountInput("1.234", CurrencyCode.COP))
+        assertEquals("1234567", sanitizeAmountInput("1,234,567", CurrencyCode.COP))
+        assertEquals("1234567", sanitizeAmountInput("1.234.567", CurrencyCode.COP))
+    }
+
+    @Test
+    fun sanitize_usd_pastedGroupingWithDecimals() {
+        assertEquals("1234.56", sanitizeAmountInput("1,234.56", CurrencyCode.USD))
+        assertEquals("1234.56", sanitizeAmountInput("1.234,56", CurrencyCode.EUR))
+        assertEquals("1234567.8", sanitizeAmountInput("1,234,567.8", CurrencyCode.USD))
+        assertEquals("1234567", sanitizeAmountInput("1,234,567", CurrencyCode.USD))
+        assertEquals("1234567", sanitizeAmountInput("1.234.567", CurrencyCode.EUR))
+    }
+
+    @Test
+    fun sanitize_usd_typingDigitByDigitStillWorks() {
+        var field = ""
+        "1234.56".forEach { field = sanitizeAmountInput(field + it, CurrencyCode.USD) }
+        assertEquals("1234.56", field)
+        assertEquals("12.34", sanitizeAmountInput("12.34.", CurrencyCode.USD))
+    }
+
+    @Test
     fun sanitize_output_isAlwaysAcceptedByParseAmount_whenComplete() {
         listOf("1234", "1234.5", "1234.56", "").forEach {
             assertEquals(true, parseAmount(sanitizeAmountInput(it, CurrencyCode.USD), CurrencyCode.USD) != null)

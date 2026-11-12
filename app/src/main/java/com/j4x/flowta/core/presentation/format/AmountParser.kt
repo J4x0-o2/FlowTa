@@ -11,9 +11,16 @@ import com.j4x.flowta.core.domain.model.CurrencyCode
  * - USD/EUR: a single "." or "," followed by 1-2 digits is the decimal mark ("12.5", "12,34").
  *   With both marks the last one is the decimal ("1,234.56", "1.234,56"). Repeated marks are
  *   thousands grouping. A lone mark followed by exactly 3 digits ("5.000") is ambiguous and rejected.
+ *   A single trailing mark ("12.") is the integer still being typed and reads as 12.
  */
 fun parseAmount(text: String, code: CurrencyCode): Double? {
-    val trimmed = text.trim()
+    var trimmed = text.trim()
+    // USD/EUR: a lone trailing mark ("12.") is the integer still being typed, so it reads as 12.
+    if (code != CurrencyCode.COP && trimmed.length > 1 && trimmed.last().let { it == '.' || it == ',' } &&
+        trimmed.dropLast(1).all { it.isDigit() || it == '.' || it == ',' } && trimmed.dropLast(1).last().isDigit()
+    ) {
+        trimmed = trimmed.dropLast(1)
+    }
     if (trimmed.isEmpty()) return 0.0
     if (!trimmed.all { it.isDigit() || it == '.' || it == ',' }) return null
 
