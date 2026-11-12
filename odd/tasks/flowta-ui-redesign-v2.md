@@ -138,3 +138,11 @@ HistoryCardsYear, HistoryCardsMonth. History A/B/C artboards are NOT the chosen 
 ## Next step
 All tasks (T0a-T5 + fixes) done and emulator-verified (2026-11-12). Last slice c17a671..45c4168
 (79 lines) under budget, not reviewed. Branch not pushed. Pending user decision: delivery (push + PR; branch ~5k changed lines incl. tests → chained-PR strategy question).
+
+## Delivery
+- 2026-11-12: 6 stacked PRs to main on GitHub: #2 input → #3 history → #4 feed → #5 metrics periods →
+  #6 metrics month/year → #7 metrics fixes + this log + README. PRs #2, #4, #5, #6 request size:exception.
+- README updated (45c9443). Release APK built and signed with the MiCuadre key (CN=MiCuadre), copied to
+  Desktop as FlowTa-1.1.0-ui-v2-release.apk (version not bumped). Release (R8) smoke test on Pixel_6 after
+  uninstalling debug: create account, 2 expenses (grouped ×2), 1 income, Día/Semana/Mes/Año, Historial: no crashes.
+
