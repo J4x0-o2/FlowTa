@@ -170,13 +170,4 @@ class HistoryAggregatorTest {
         )
         assertEquals(PeriodTotals.ZERO, result.totals)
     }
-
-    @Test
-    fun barFraction_scalesToMaxAndClamps() {
-        assertEquals(0.5f, HistoryAggregator.barFraction(50.0, 100.0), 0.0001f)
-        assertEquals(1f, HistoryAggregator.barFraction(100.0, 100.0), 0.0001f)
-        assertEquals(1f, HistoryAggregator.barFraction(150.0, 100.0), 0.0001f)
-        assertEquals(0f, HistoryAggregator.barFraction(10.0, 0.0), 0.0001f)
-        assertEquals(0f, HistoryAggregator.barFraction(-5.0, 100.0), 0.0001f)
-    }
 }

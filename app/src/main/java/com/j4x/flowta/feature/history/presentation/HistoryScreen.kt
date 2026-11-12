@@ -110,6 +110,7 @@ fun HistoryMonthScreen(
                         Tile("Gastos", it.expense, TileKind.EXPENSE, Modifier.weight(1f))
                         Tile("Movimientos", it.count.toDouble(), TileKind.COUNT, Modifier.weight(1f))
                     }
+                    SpendShareBar(it.spendShare)
                 }
             }
             item { SectionTitle("Por semana") }
@@ -258,8 +259,7 @@ private fun MonthCard(row: MonthRowModel, onClick: () -> Unit) {
                 income = row.income,
                 expense = row.expense,
                 net = row.net,
-                incomeFraction = row.incomeFraction,
-                expenseFraction = row.expenseFraction,
+                spendShare = row.spendShare,
                 modifier = Modifier.weight(1f)
             )
             Icon(
@@ -279,22 +279,20 @@ private fun WeekCard(week: WeekRowModel) {
             income = week.income,
             expense = week.expense,
             net = week.net,
-            incomeFraction = week.incomeFraction,
-            expenseFraction = week.expenseFraction,
+            spendShare = week.spendShare,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp)
         )
     }
 }
 
-/** Title with the net on the right, an income bar and an expense bar, and the "+ income · - expense" line. */
+/** Title with the net on the right, income and expense rows, and the single spend-share bar. */
 @Composable
 private fun PeriodBody(
     title: String,
     income: Double,
     expense: Double,
     net: Double,
-    incomeFraction: Float,
-    expenseFraction: Float,
+    spendShare: SpendShare,
     modifier: Modifier = Modifier
 ) {
     val symbol = LocalCurrencySymbol.current
@@ -321,27 +319,63 @@ private fun PeriodBody(
                 maxLines = 1
             )
         }
-        Bar(incomeFraction, flowColors.incomeFill)
-        Bar(expenseFraction, flowColors.expenseFill)
-        Text(
-            "${formatIncome(income, symbol, code)} · ${formatExpense(expense, symbol, code)}",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-        )
+        AmountRow("Ingresos", formatIncome(income, symbol, code), flowColors.incomeText)
+        AmountRow("Gastos", formatExpense(expense, symbol, code), flowColors.expenseText)
+        SpendShareBar(spendShare)
     }
 }
 
 @Composable
-private fun Bar(fraction: Float, color: Color) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(4.dp)
-            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f), CircleShape)
+private fun AmountRow(label: String, amount: String, color: Color) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        if (fraction > 0f) {
-            Box(Modifier.fillMaxWidth(fraction).height(4.dp).background(color, CircleShape))
+        Text(
+            label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+        )
+        Text(amount, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = color, maxLines = 1)
+    }
+}
+
+private data class BarSpec(val fraction: Float, val fill: Color, val caption: String, val captionColor: Color)
+
+/** One bar plus its caption; renders nothing when there is nothing to compare. */
+@Composable
+private fun SpendShareBar(share: SpendShare) {
+    val symbol = LocalCurrencySymbol.current
+    val code = LocalCurrencyCode.current
+    val spec = when (share) {
+        SpendShare.None -> return
+        is SpendShare.Within -> BarSpec(
+            share.fraction,
+            flowColors.spentFill,
+            "Gastaste el ${share.percent}% de lo que ganaste",
+            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+        )
+        is SpendShare.Over -> BarSpec(
+            1f,
+            flowColors.expenseFill,
+            "Gastaste ${formatMoney(share.excess, symbol, code)} más de lo que ganaste",
+            flowColors.expenseText
+        )
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(10.dp)
+                .clip(CircleShape)
+                .background(flowColors.incomeFill.copy(alpha = 0.25f))
+        ) {
+            if (spec.fraction > 0f) {
+                Box(Modifier.fillMaxWidth(spec.fraction).height(10.dp).background(spec.fill, CircleShape))
+            }
         }
+        Text(spec.caption, style = MaterialTheme.typography.labelMedium, color = spec.captionColor)
     }
 }
 

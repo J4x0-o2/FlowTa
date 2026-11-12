@@ -86,10 +86,6 @@ object HistoryAggregator {
         return MonthDetail(month, totals(inMonth), weeks)
     }
 
-    /** Length of a bar as a 0..1 fraction of [max]; 0 when [max] is not positive. */
-    fun barFraction(value: Double, max: Double): Float =
-        if (max <= 0.0) 0f else (value / max).toFloat().coerceIn(0f, 1f)
-
     private fun dateOf(millis: Long, zone: ZoneId): LocalDate = Instant.ofEpochMilli(millis).atZone(zone).toLocalDate()
 
     /** The Sunday closing the week of [start], or the last day of [month] when that comes first. */

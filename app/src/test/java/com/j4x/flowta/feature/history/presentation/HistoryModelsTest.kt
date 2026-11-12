@@ -37,7 +37,7 @@ class HistoryModelsTest {
     }
 
     @Test
-    fun yearModel_scalesBarsToBestIncomeOrExpenseOfTheYear() {
+    fun yearModel_eachMonthStandsAlone() {
         val history = YearHistory(
             year = 2026,
             totals = PeriodTotals(300.0, 150.0, 5),
@@ -59,10 +59,8 @@ class HistoryModelsTest {
         assertEquals("Octubre", october.name)
         assertTrue(october.isCurrent)
         assertEquals(-50.0, october.net, 0.0001)
-        assertEquals(100f / 200f, october.incomeFraction, 0.0001f)
-        assertEquals(150f / 200f, october.expenseFraction, 0.0001f)
-        assertEquals(1f, model.months[1].incomeFraction, 0.0001f)
-        assertEquals(0f, model.months[1].expenseFraction, 0.0001f)
+        assertEquals(SpendShare.Over(50.0), october.spendShare)
+        assertEquals(SpendShare.Within(0f, 0), model.months[1].spendShare)
     }
 
     @Test
@@ -75,7 +73,7 @@ class HistoryModelsTest {
     }
 
     @Test
-    fun monthModel_titleSubtitleAndWeekBars() {
+    fun monthModel_titleSubtitleAndSpendShares() {
         val detail = MonthDetail(
             month = YearMonth.of(2026, 10),
             totals = PeriodTotals(60.0, 20.0, 3),
@@ -93,8 +91,9 @@ class HistoryModelsTest {
         assertEquals(40.0, model.net, 0.0001)
         // Newest week first.
         assertEquals("1 – 4 oct", model.weeks[1].rangeText)
-        assertEquals(1f, model.weeks[1].incomeFraction, 0.0001f)
-        assertEquals(20f / 60f, model.weeks[0].expenseFraction, 0.0001f)
+        assertEquals(SpendShare.Within(0f, 0), model.weeks[1].spendShare)
+        assertEquals(SpendShare.Over(20.0), model.weeks[0].spendShare)
+        assertEquals(SpendShare.Within(20f / 60f, 33), model.spendShare)
         assertTrue(model.weeks[0].isCurrent)
         assertEquals(-20.0, model.weeks[0].net, 0.0001)
     }
@@ -124,5 +123,43 @@ class HistoryModelsTest {
         assertEquals("−$500", formatExpense(500.0, "$", CurrencyCode.COP))
         assertEquals("$0", formatIncome(0.0, "$", CurrencyCode.COP))
         assertEquals("$0", formatExpense(0.0, "$", CurrencyCode.COP))
+    }
+
+    @Test
+    fun spendShare_normal_isFractionAndRoundedPercent() {
+        assertWithin(0.65f, 65, spendShare(income = 1000.0, expense = 650.0))
+        assertWithin(1f / 3f, 33, spendShare(income = 300.0, expense = 100.0))
+        assertWithin(2f / 3f, 67, spendShare(income = 300.0, expense = 200.0))
+    }
+
+    private fun assertWithin(fraction: Float, percent: Int, actual: SpendShare) {
+        val within = actual as SpendShare.Within
+        assertEquals(fraction, within.fraction, 0.0001f)
+        assertEquals(percent, within.percent)
+    }
+
+    @Test
+    fun spendShare_exactlyAllIncomeSpent_isWithinAt100() {
+        assertEquals(SpendShare.Within(1f, 100), spendShare(income = 500.0, expense = 500.0))
+    }
+
+    @Test
+    fun spendShare_noExpense_isEmptyBarAtZeroPercent() {
+        assertEquals(SpendShare.Within(0f, 0), spendShare(income = 500.0, expense = 0.0))
+    }
+
+    @Test
+    fun spendShare_expenseAboveIncome_isOverWithExcess() {
+        assertEquals(SpendShare.Over(250.0), spendShare(income = 500.0, expense = 750.0))
+    }
+
+    @Test
+    fun spendShare_zeroIncomeWithExpense_isOverWithWholeExpense() {
+        assertEquals(SpendShare.Over(80.0), spendShare(income = 0.0, expense = 80.0))
+    }
+
+    @Test
+    fun spendShare_bothZero_isNone() {
+        assertEquals(SpendShare.None, spendShare(income = 0.0, expense = 0.0))
     }
 }
