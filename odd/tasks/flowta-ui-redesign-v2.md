@@ -81,7 +81,19 @@ HistoryCardsYear, HistoryCardsMonth. History A/B/C artboards are NOT the chosen 
   RDD vs fe5e3ad: medium, 2164 lines, due → user GRANTED. Review review-1676d95cabd12491: APPROVED,
   acknowledged, burned. Boundary = 0753391. Advisory: R3-stale-guard-rapid-taps (MetricsViewModel.kt:67-68,
   rapid ‹ taps read a stale canGoBack); R3-day-skips-category-query-untested (ObserveMetricsUseCase.kt:32-37).
-- [ ] T4 Metrics Month + Year — route: delegated
+- [x] T4 Metrics Month + Year — route: delegated. Commits 2bdc6e7 + fix 1f382e7 (new query incomeBySourceInRange, no schema
+  change; removed incomeVsExpenseByDay + getNetBalance/getTotalTransfers). Tests + assembleDebug green.
+  Emulator 2026-11-12: Oct 2026 matches history (4,730,000 / 2,422,500 / +2,307,500), ring 49%, +64% vs Sep,
+  sources Salario 74% / Freelance 26%; Year 2026 matches (40,580,000 / 24,704,500), ring 39%.
+  BUG found on emulator: hash-based category colors collide (Hogar = Alimentación purple; Salud ≈ Ropa orange).
+  Reopened → fix 1f382e7: slots by order of all expense types (created_at, id), 12 distinct hues, sources
+  8 greens, unknown/no source gray; deleting a category shifts later colors (accepted). RED → GREEN; test
+  (296) + assembleDebug green. Emulator re-check: Year 7 categories all distinct; Week shows the same
+  colors (Alimentación teal, Transporte green) as Month/Year.
+  RDD vs 0753391: medium, 1013 lines, due → user GRANTED. Review review-442aa5b2b79b3a74: APPROVED,
+  acknowledged, burned. Boundary = 1f382e7. Advisory: R3-compact-money-rounding-boundary (MetricsText.kt:115,
+  999,999 → "$1000 mil" instead of "$1 M"); R3-income-bar-zero-weight (MonthYearMetricsContent.kt:171);
+  R3-income-source-tie-order (Transaction.sq:76, equal totals have no tiebreak).
 
 ## Acceptance
 - `./gradlew test` and `./gradlew assembleDebug` green after each task.
@@ -100,4 +112,6 @@ HistoryCardsYear, HistoryCardsMonth. History A/B/C artboards are NOT the chosen 
   - Note: history net amounts show no "+" sign (design had "+$640.000"); user confirmed it's fine as is.
 
 ## Next step
-T0a.
+All tasks done and emulator-verified (2026-11-12). Branch not pushed. Pending user decision:
+advisory follow-ups (paste handling in AmountInput, feed expansion keys, compact money boundary, etc.)
+and delivery (push + PR; branch ~5k changed lines incl. tests → chained-PR strategy question).
