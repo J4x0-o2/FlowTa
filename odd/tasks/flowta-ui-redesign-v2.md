@@ -70,7 +70,17 @@ HistoryCardsYear, HistoryCardsMonth. History A/B/C artboards are NOT the chosen 
   Advisory follow-ups: R3-stale-expansion-keys (TransactionScreen.kt:62-64, saved keys never pruned);
   R3-key-anchor-deletion (FeedGrouping.kt:46, deleting the oldest item changes the group key → collapses);
   R3-summary-boundary (GroupedBubble.kt:167-170, category summary edge at exactly 3).
-- [ ] T3 Metrics base + Day + Week — route: delegated
+- [x] T3 Metrics base + Day + Week — route: delegated (writer trigger: 10+ files). Commit 0753391.
+  RED (unresolved MetricsPeriod/Aggregator/...) → GREEN; 66 metrics tests; test + assembleDebug green;
+  parent spot check green. Emulator OK (2026-11-12): Day = only "Neto del día"; Week 19–25 oct matches
+  history (630,000 / 273,500 / +356,500), delta −11% vs prev (398,500), tiles +5% / +36%, tap D shows
+  "Dom 25 · $0 · −$254,000", categories 80/20, avg $39,071, most expensive Domingo, ahorro 57%.
+  Decisions: default tab Día; offset in SavedStateHandle; delta % over |previous|; Spanish names in MetricsText.
+  Left for T4: Month/Year are NetCard placeholders; income-by-source needs a new query; unused
+  incomeVsExpenseByDay SQL + getTotalTransfers/getNetBalance remain. Ahorro value not green-tinted (design was).
+  RDD vs fe5e3ad: medium, 2164 lines, due → user GRANTED. Review review-1676d95cabd12491: APPROVED,
+  acknowledged, burned. Boundary = 0753391. Advisory: R3-stale-guard-rapid-taps (MetricsViewModel.kt:67-68,
+  rapid ‹ taps read a stale canGoBack); R3-day-skips-category-query-untested (ObserveMetricsUseCase.kt:32-37).
 - [ ] T4 Metrics Month + Year — route: delegated
 
 ## Acceptance
@@ -79,6 +89,15 @@ HistoryCardsYear, HistoryCardsMonth. History A/B/C artboards are NOT the chosen 
 
 ## Progress / evidence
 - 2026-11-12: branch `feat/ui-redesign-v2` created from main 742fade. RDD: on (global).
+
+## Emulator checks (user rule: test on emulator before confirming)
+- 2026-11-12, Pixel_6 AVD, debug APK built from 66752ff (temp worktree, removed after):
+  - T0a OK: "Registrar transacción..." sits above the gesture pill (gesture nav mode 2).
+  - T2 OK: groups render (×N, total, categories "+2 más", range across days); tap expands, ^ collapses.
+  - T1 OK: year cards + month week cards; overspent week (income $0) shows full red bar + caption.
+  - T0b OK: typing 373929 shows "$373,929" in-field, no helper text; mid-text delete/insert keeps cursor
+    (1234567 → 4×left → del → "124,567" → type 9 → "1,294,567"; separators are skipped by the cursor).
+  - Note: history net amounts show no "+" sign (design had "+$640.000"); user confirmed it's fine as is.
 
 ## Next step
 T0a.
