@@ -35,12 +35,18 @@ class ObserveMetricsUseCase @Inject constructor(
             // The category query is inclusive on both ends, the period range is [from, to).
             metrics.getExpensesByCategory(DateRange(range.from, range.to - 1))
         }
+        val sources = if (period.type == MetricsPeriodType.MONTH || period.type == MetricsPeriodType.YEAR) {
+            metrics.getIncomeBySource(DateRange(range.from, range.to))
+        } else {
+            flowOf(emptyList())
+        }
         return combine(
             history.observeMovements(previousFrom, range.to),
             history.observeEarliest(),
-            categories
-        ) { movements, earliest, byCategory ->
-            MetricsAggregator.compute(period, movements, byCategory, earliest, today, zone)
+            categories,
+            sources
+        ) { movements, earliest, byCategory, bySource ->
+            MetricsAggregator.compute(period, movements, byCategory, earliest, today, zone, bySource)
         }
     }
 }

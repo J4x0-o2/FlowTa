@@ -150,14 +150,14 @@ private fun FlowTile(
 }
 
 @Composable
-private fun changeTone(change: PercentChange, goodWhenUp: Boolean): Color = when {
+internal fun changeTone(change: PercentChange, goodWhenUp: Boolean): Color = when {
     change.percent == 0 -> mutedText()
     (change.percent > 0) == goodWhenUp -> flowColors.incomeText
     else -> flowColors.expenseText
 }
 
 @Composable
-private fun mutedText(): Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+internal fun mutedText(): Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
 
 @Composable
 private fun DailyBarsCard(days: List<DayTotals>, selectedDay: LocalDate?, onSelectDay: (LocalDate) -> Unit) {

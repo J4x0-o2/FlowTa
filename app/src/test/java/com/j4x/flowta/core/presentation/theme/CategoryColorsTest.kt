@@ -35,4 +35,18 @@ class CategoryColorsTest {
     fun colorMatchesItsPaletteIndex() {
         assertEquals(categoryPalette[categoryColorIndex("abc")], categoryColor("abc"))
     }
+
+    @Test
+    fun incomeSourceColor_isStableAndInsideItsPalette() {
+        assertEquals(incomeSourceColor("job"), incomeSourceColor("job"))
+        val ids = (1..200).map { "source-$it" }
+        assertTrue(ids.all { incomeSourceColor(it) in incomeSourcePalette })
+        assertEquals(incomeSourcePalette.size, incomeSourcePalette.toSet().size)
+    }
+
+    @Test
+    fun incomeWithoutSourceGetsANeutralColor() {
+        assertEquals(NoSourceColor, incomeSourceColor(null))
+        assertTrue(NoSourceColor !in incomeSourcePalette)
+    }
 }

@@ -238,4 +238,53 @@ class MetricsAggregatorTest {
     fun categoryShares_emptyListGivesNothing() {
         assertTrue(MetricsAggregator.categoryShares(emptyList()).isEmpty())
     }
+
+    // --- income sources ---
+
+    @Test
+    fun incomeSourceShares_sortBiggestFirstWithPercentAndBarFraction() {
+        val shares = MetricsAggregator.incomeSourceShares(
+            listOf(
+                IncomeSourceTotal("b", "Becas", 100.0),
+                IncomeSourceTotal("a", "Trabajo", 300.0)
+            )
+        )
+        assertEquals(listOf("Trabajo", "Becas"), shares.map { it.name })
+        assertEquals(listOf(75, 25), shares.map { it.percent })
+        assertEquals(1f, shares[0].barFraction, 0f)
+        assertEquals(1f / 3f, shares[1].barFraction, 0.0001f)
+        assertEquals(listOf("a", "b"), shares.map { it.id })
+    }
+
+    @Test
+    fun incomeSourceShares_groupIncomeWithoutASourceAsSinFuente() {
+        val shares = MetricsAggregator.incomeSourceShares(
+            listOf(
+                IncomeSourceTotal("a", "Trabajo", 500.0),
+                IncomeSourceTotal(null, null, 100.0),
+                IncomeSourceTotal("gone", null, 100.0) // the source type no longer exists
+            )
+        )
+        assertEquals(listOf("Trabajo", "Sin fuente"), shares.map { it.name })
+        val none = shares.last()
+        assertEquals(200.0, none.total, 0.0)
+        assertNull(none.id)
+        assertEquals(29, none.percent)
+    }
+
+    @Test
+    fun incomeSourceShares_dropNonPositiveAndHandleEmpty() {
+        assertTrue(MetricsAggregator.incomeSourceShares(emptyList()).isEmpty())
+        assertTrue(MetricsAggregator.incomeSourceShares(listOf(IncomeSourceTotal("a", "X", 0.0))).isEmpty())
+    }
+
+    @Test
+    fun compute_carriesIncomeSourcesAsShares() {
+        val month = MetricsPeriod.containing(MetricsPeriodType.MONTH, today)
+        val result = MetricsAggregator.compute(
+            month, emptyList(), emptyList(), null, today, bogota,
+            incomeSources = listOf(IncomeSourceTotal("a", "Trabajo", 10.0))
+        )
+        assertEquals(listOf("Trabajo"), result.incomeSources.map { it.name })
+    }
 }

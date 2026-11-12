@@ -8,6 +8,7 @@ import com.j4x.flowta.feature.history.domain.model.HistoryMovement
 import com.j4x.flowta.feature.history.domain.repository.HistoryRepository
 import com.j4x.flowta.feature.metrics.domain.model.CategoryExpense
 import com.j4x.flowta.feature.metrics.domain.model.DateRange
+import com.j4x.flowta.feature.metrics.domain.model.IncomeSourceTotal
 import com.j4x.flowta.feature.metrics.domain.model.MetricsPeriodType
 import com.j4x.flowta.feature.metrics.domain.repository.MetricsRepository
 import com.j4x.flowta.feature.metrics.domain.usecase.ObserveMetricsUseCase
@@ -15,7 +16,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -42,6 +42,8 @@ class MetricsViewModelTest {
     private val earliest = MutableStateFlow<Long?>(null)
     private val categories = MutableStateFlow<List<CategoryExpense>>(emptyList())
     private val requestedCategoryRanges = mutableListOf<DateRange>()
+    private val sources = MutableStateFlow<List<IncomeSourceTotal>>(emptyList())
+    private val requestedSourceRanges = mutableListOf<DateRange>()
 
     private val history = object : HistoryRepository {
         override fun observeMovements(fromMillis: Long, toMillis: Long): Flow<List<HistoryMovement>> =
@@ -56,8 +58,10 @@ class MetricsViewModelTest {
             return categories
         }
 
-        override fun getNetBalance(): Flow<Double> = emptyFlow()
-        override fun getTotalTransfers(range: DateRange): Flow<Double> = emptyFlow()
+        override fun getIncomeBySource(range: DateRange): Flow<List<IncomeSourceTotal>> {
+            requestedSourceRanges += range
+            return sources
+        }
     }
 
     @Before
@@ -271,6 +275,61 @@ class MetricsViewModelTest {
             assertEquals(date("2026-11-12"), after.period!!.start)
             assertEquals(5.0, after.metrics!!.expense, 0.0)
             assertEquals(date("2026-11-12"), after.today)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun month_exposesIncomeSourcesQueriedForTheHalfOpenMonthRange() = runTest {
+        sources.value = listOf(
+            IncomeSourceTotal("job", "Trabajo", 800.0),
+            IncomeSourceTotal(null, null, 200.0)
+        )
+        movements.value = listOf(
+            HistoryMovement("INCOME", 1000.0, millis("2026-11-03T09:00:00")),
+            HistoryMovement("EXPENSE", 250.0, millis("2026-11-04T09:00:00"))
+        )
+        val vm = viewModel()
+
+        vm.state.test {
+            vm.onIntent(MetricsIntent.SelectType(MetricsPeriodType.MONTH))
+            val state = expectMostRecentItem()
+            val metrics = state.metrics!!
+            assertEquals(listOf("Trabajo", "Sin fuente"), metrics.incomeSources.map { it.name })
+            assertEquals(75, metrics.savingsPercent)
+            val range = requestedSourceRanges.last()
+            assertEquals(millis("2026-11-01T00:00:00"), range.from)
+            assertEquals(millis("2026-12-01T00:00:00"), range.to)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun year_exposesIncomeSourcesForTheWholeYear() = runTest {
+        sources.value = listOf(IncomeSourceTotal("job", "Trabajo", 800.0))
+        val vm = viewModel()
+
+        vm.state.test {
+            vm.onIntent(MetricsIntent.SelectType(MetricsPeriodType.YEAR))
+            val state = expectMostRecentItem()
+            assertEquals(1, state.metrics!!.incomeSources.size)
+            val range = requestedSourceRanges.last()
+            assertEquals(millis("2026-01-01T00:00:00"), range.from)
+            assertEquals(millis("2027-01-01T00:00:00"), range.to)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun dayAndWeek_doNotQueryIncomeSources() = runTest {
+        sources.value = listOf(IncomeSourceTotal("job", "Trabajo", 800.0))
+        val vm = viewModel()
+
+        vm.state.test {
+            vm.onIntent(MetricsIntent.SelectType(MetricsPeriodType.WEEK))
+            val state = expectMostRecentItem()
+            assertTrue(state.metrics!!.incomeSources.isEmpty())
+            assertTrue(requestedSourceRanges.isEmpty())
             cancelAndIgnoreRemainingEvents()
         }
     }
