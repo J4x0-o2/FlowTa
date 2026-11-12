@@ -7,10 +7,4 @@ data class CategoryExpense(
     val total: Double
 )
 
-data class DailyFlow(
-    val flowType: String,
-    val total: Double,
-    val dayBucket: Long
-)
-
 data class DateRange(val from: Long, val to: Long)
