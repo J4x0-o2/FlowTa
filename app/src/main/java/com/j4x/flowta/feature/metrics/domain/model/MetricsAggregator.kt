@@ -19,6 +19,15 @@ data class PercentChange(val percent: Int)
 /** A category's share of the period's expenses; [barFraction] is relative to the top category. */
 data class CategoryShare(val category: CategoryExpense, val percent: Int, val barFraction: Float)
 
+/** An income source's share of the period's income; [id] is null for income without a source. */
+data class IncomeSourceShare(
+    val id: String?,
+    val name: String,
+    val total: Double,
+    val percent: Int,
+    val barFraction: Float
+)
+
 /** Everything Metrics shows for one [period]. Transfers are never part of it. */
 data class PeriodMetrics(
     val period: MetricsPeriod,
@@ -31,7 +40,9 @@ data class PeriodMetrics(
     /** Days of the period elapsed up to today (the whole period once it is over). */
     val elapsedDays: Int,
     /** Whether any movement exists before the period starts. */
-    val hasPrevious: Boolean
+    val hasPrevious: Boolean,
+    /** Income by source (Month and Year only), biggest first. */
+    val incomeSources: List<IncomeSourceShare> = emptyList()
 ) {
     val income: Double get() = totals.income
     val expense: Double get() = totals.expense
@@ -69,7 +80,8 @@ object MetricsAggregator {
         categories: List<CategoryExpense>,
         earliestMillis: Long?,
         today: LocalDate,
-        zone: ZoneId
+        zone: ZoneId,
+        incomeSources: List<IncomeSourceTotal> = emptyList()
     ): PeriodMetrics {
         val previousPeriod = period.previous()
         val inPeriod = mutableListOf<HistoryMovement>()
@@ -96,7 +108,8 @@ object MetricsAggregator {
             days = days,
             categories = categories.filter { it.total > 0 }.sortedByDescending { it.total },
             elapsedDays = period.elapsedDays(today),
-            hasPrevious = earliestMillis != null && dateOf(earliestMillis, zone) < period.start
+            hasPrevious = earliestMillis != null && dateOf(earliestMillis, zone) < period.start,
+            incomeSources = incomeSourceShares(incomeSources)
         )
     }
 
@@ -118,6 +131,30 @@ object MetricsAggregator {
         }
     }
 
+    /**
+     * Income per source with its percent of the total and bar length relative to the biggest one.
+     * Rows without a source (or whose source type no longer exists) merge into "Sin fuente".
+     */
+    fun incomeSourceShares(rows: List<IncomeSourceTotal>): List<IncomeSourceShare> {
+        val merged = LinkedHashMap<String?, Pair<String, Double>>()
+        rows.forEach { row ->
+            val named = row.sourceId != null && row.sourceName != null
+            val key = if (named) row.sourceId else null
+            val name = if (named) row.sourceName!! else NO_SOURCE_NAME
+            merged[key] = name to ((merged[key]?.second ?: 0.0) + row.total)
+        }
+        val positive = merged.entries.filter { it.value.second > 0.0 }.sortedByDescending { it.value.second }
+        val total = positive.sumOf { it.value.second }
+        val top = positive.firstOrNull()?.value?.second ?: return emptyList()
+        return positive.map { (id, value) ->
+            IncomeSourceShare(
+                id, value.first, value.second,
+                (value.second / total * 100).roundToInt(),
+                (value.second / top).toFloat().coerceIn(0f, 1f)
+            )
+        }
+    }
+
     private fun dateOf(millis: Long, zone: ZoneId): LocalDate = Instant.ofEpochMilli(millis).atZone(zone).toLocalDate()
 
     private fun dayTotals(date: LocalDate, rows: List<HistoryMovement>) = DayTotals(
@@ -132,6 +169,7 @@ object MetricsAggregator {
         count = rows.size
     )
 
+    const val NO_SOURCE_NAME = "Sin fuente"
     private const val INCOME = "INCOME"
     private const val EXPENSE = "EXPENSE"
 }

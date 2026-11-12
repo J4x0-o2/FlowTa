@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.background
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -46,7 +47,7 @@ import androidx.navigation.NavController
 import com.j4x.flowta.core.presentation.LocalCurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencySymbol
 import com.j4x.flowta.core.presentation.theme.Indigo500
-import com.j4x.flowta.core.presentation.theme.categoryColor
+import com.j4x.flowta.core.presentation.theme.MetricsColors
 import com.j4x.flowta.core.presentation.theme.flowColors
 import com.j4x.flowta.feature.metrics.domain.model.CategoryExpense
 import com.j4x.flowta.feature.metrics.domain.model.MetricsPeriodType
@@ -100,12 +101,12 @@ fun MetricsScreen(
             }
             if (metrics != null) {
                 when (state.periodType) {
-                    // Month and Year only show their net until their dedicated views land.
-                    MetricsPeriodType.DAY,
+                    MetricsPeriodType.DAY -> item { NetCard(state.periodType.netLabel(), metrics.net) }
                     MetricsPeriodType.MONTH,
-                    MetricsPeriodType.YEAR -> item { NetCard(state.periodType.netLabel(), metrics.net) }
+                    MetricsPeriodType.YEAR -> monthYearMetricsItems(state.periodType, metrics, state.colors)
                     MetricsPeriodType.WEEK -> weekMetricsItems(
                         metrics = metrics,
+                        colors = state.colors,
                         isCurrentWeek = period != null && today != null && period.isCurrent(today),
                         selectedDay = state.selectedDay,
                         onSelectDay = { viewModel.onIntent(MetricsIntent.SelectDay(it)) }
@@ -222,12 +223,22 @@ internal fun MetricsCard(
     }
 }
 
-/** Donut of expenses by category, colored by [categoryColor]. Kept for the Month and Year views. */
+/**
+ * Donut of expenses by category, colored by [colors], with [centerText] / [centerCaption] in the
+ * hole and a legend of colored square, name and bold amount.
+ */
 @Composable
-internal fun ExpensesDonutChart(categories: List<CategoryExpense>) {
+internal fun ExpensesDonutChart(
+    categories: List<CategoryExpense>,
+    colors: MetricsColors,
+    centerText: String,
+    centerCaption: String
+) {
     val donut   = remember(categories) { computeDonutData(categories) }
     val nonZero = donut.slices
     val total   = donut.total
+    val symbol  = LocalCurrencySymbol.current
+    val code    = LocalCurrencyCode.current
 
     if (total == 0.0) {
         Box(
@@ -249,20 +260,35 @@ internal fun ExpensesDonutChart(categories: List<CategoryExpense>) {
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Canvas(modifier = Modifier.size(140.dp)) {
-            var startAngle = -90f
-            nonZero.forEach { cat ->
-                val sweep = (cat.total / total * 360f).toFloat()
-                drawArc(
-                    color      = categoryColor(cat.typeId),
-                    startAngle = startAngle,
-                    sweepAngle = sweep,
-                    useCenter  = true,
-                    style      = Fill
-                )
-                startAngle += sweep
+        Box(modifier = Modifier.size(140.dp), contentAlignment = Alignment.Center) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                var startAngle = -90f
+                nonZero.forEach { cat ->
+                    val sweep = (cat.total / total * 360f).toFloat()
+                    drawArc(
+                        color      = colors.category(cat.typeId),
+                        startAngle = startAngle,
+                        sweepAngle = sweep,
+                        useCenter  = true,
+                        style      = Fill
+                    )
+                    startAngle += sweep
+                }
+                drawCircle(color = holeColor, radius = size.minDimension * 0.34f)
             }
-            drawCircle(color = holeColor, radius = size.minDimension * 0.3f)
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    centerText,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1
+                )
+                Text(
+                    centerCaption,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
         }
 
         Spacer(Modifier.width(16.dp))
@@ -271,13 +297,42 @@ internal fun ExpensesDonutChart(categories: List<CategoryExpense>) {
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            nonZero.take(7).forEach { cat ->
-                val pct = (cat.total / total * 100).toInt()
-                LegendDot(color = categoryColor(cat.typeId), label = "${cat.typeName} $pct%")
+            nonZero.take(LEGEND_ROWS).forEach { cat ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(colors.category(cat.typeId))
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        cat.typeName,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.weight(1f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        formatCompactMoney(cat.total, symbol, code),
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1
+                    )
+                }
+            }
+            if (nonZero.size > LEGEND_ROWS) {
+                Text(
+                    "y ${nonZero.size - LEGEND_ROWS} más",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
             }
         }
     }
 }
+
+private const val LEGEND_ROWS = 7
 
 @Composable
 internal fun LegendDot(color: Color, label: String) {

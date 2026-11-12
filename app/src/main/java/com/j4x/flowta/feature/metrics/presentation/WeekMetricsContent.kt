@@ -43,7 +43,7 @@ import androidx.compose.ui.unit.dp
 import com.j4x.flowta.core.presentation.LocalCurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencySymbol
 import com.j4x.flowta.core.presentation.theme.Indigo500
-import com.j4x.flowta.core.presentation.theme.categoryColor
+import com.j4x.flowta.core.presentation.theme.MetricsColors
 import com.j4x.flowta.core.presentation.theme.flowColors
 import com.j4x.flowta.feature.history.presentation.formatExpense
 import com.j4x.flowta.feature.history.presentation.formatIncome
@@ -60,13 +60,14 @@ private val ChartHeight = 120.dp
 /** Cards of the Week tab: net hero, income vs expenses per day, expenses by category, quick stats. */
 internal fun LazyListScope.weekMetricsItems(
     metrics: PeriodMetrics,
+    colors: MetricsColors,
     isCurrentWeek: Boolean,
     selectedDay: LocalDate?,
     onSelectDay: (LocalDate) -> Unit
 ) {
     item { WeekHeroCard(metrics, isCurrentWeek) }
     item { DailyBarsCard(metrics.days, selectedDay, onSelectDay) }
-    item { CategoriesCard(metrics) }
+    item { CategoriesCard(metrics, colors) }
     item { WeekStatsRow(metrics) }
 }
 
@@ -150,14 +151,14 @@ private fun FlowTile(
 }
 
 @Composable
-private fun changeTone(change: PercentChange, goodWhenUp: Boolean): Color = when {
+internal fun changeTone(change: PercentChange, goodWhenUp: Boolean): Color = when {
     change.percent == 0 -> mutedText()
     (change.percent > 0) == goodWhenUp -> flowColors.incomeText
     else -> flowColors.expenseText
 }
 
 @Composable
-private fun mutedText(): Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+internal fun mutedText(): Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
 
 @Composable
 private fun DailyBarsCard(days: List<DayTotals>, selectedDay: LocalDate?, onSelectDay: (LocalDate) -> Unit) {
@@ -271,7 +272,7 @@ private fun DayColumn(
 }
 
 @Composable
-private fun CategoriesCard(metrics: PeriodMetrics) {
+private fun CategoriesCard(metrics: PeriodMetrics, colors: MetricsColors) {
     val symbol = LocalCurrencySymbol.current
     val code = LocalCurrencyCode.current
     val shares = remember(metrics.categories) { MetricsAggregator.categoryShares(metrics.categories) }
@@ -285,7 +286,7 @@ private fun CategoriesCard(metrics: PeriodMetrics) {
         }
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             visible.forEach { share ->
-                val color = categoryColor(share.category.typeId)
+                val color = colors.category(share.category.typeId)
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(modifier = Modifier.size(10.dp).clip(RoundedCornerShape(2.dp)).background(color))

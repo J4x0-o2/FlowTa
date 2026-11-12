@@ -107,3 +107,18 @@ internal fun PercentChange.arrowText(): String = when {
     percent < 0 -> "▼ ${abs(percent)}%"
     else -> "0%"
 }
+
+/** Short amount for tight spots: "$950", "$450 mil", "$12,5 mil", "$1,18 M". */
+internal fun formatCompactMoney(value: Double, symbol: String, code: CurrencyCode): String {
+    val magnitude = abs(value)
+    val text = when {
+        magnitude >= 1_000_000 -> "${trimmed(magnitude / 1_000_000, 2)} M"
+        magnitude >= 10_000 -> "${trimmed(magnitude / 1_000, 1)} mil"
+        else -> return formatMoney(value, symbol, code)
+    }
+    return (if (value < 0) "-" else "") + symbol + text
+}
+
+/** Up to [decimals] decimals without trailing zeros, with a decimal comma. */
+private fun trimmed(value: Double, decimals: Int): String =
+    String.format(java.util.Locale.ROOT, "%.${decimals}f", value).trimEnd('0').trimEnd('.').replace('.', ',')
