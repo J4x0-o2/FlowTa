@@ -95,6 +95,30 @@ HistoryCardsYear, HistoryCardsMonth. History A/B/C artboards are NOT the chosen 
   999,999 → "$1000 mil" instead of "$1 M"); R3-income-bar-zero-weight (MonthYearMetricsContent.kt:171);
   R3-income-source-tie-order (Transaction.sq:76, equal totals have no tiebreak).
 
+- [x] T5 Review follow-ups (user authorized 2026-11-12) — route: delegated. Commits 48b6b9b (a,b,c),
+  d9aff43 (f,g,h), 7217905 (d,e,i,j,k,n), c17a671 (l,m). RED→GREEN per group (h, j, n were already correct:
+  guard tests added, no genuine RED). test + assembleDebug green; parent spot check green.
+  Decisions: COP paste drops a 1–2 digit fraction; USD/EUR last mark is decimal when the other mark groups;
+  "12." parses as 12 in USD/EUR; period guard uses offset + earliest() not UI state; expansion reconciled by
+  shared movement id; compact 999,999 → "$1 M".
+  Emulator: Week "Ahorro 57%" green; 6 rapid ‹ taps on Year stay at 2026; typing 1234567 / mid-delete / "5.000"
+  → "5,000" OK; group expand/collapse OK. Clipboard paste not exercisable via adb (unit tests cover it).
+  RDD vs 1f382e7: medium, 376 lines (under budget, final slice) → user GRANTED. Review review-eefe8570b7283e88:
+  APPROVED, acknowledged, burned. Boundary = c17a671. Two real warnings introduced by T5 → fix delegated:
+  R3-cop-mid-edit-mark-truncates (typing "." mid-number in COP drops digits) and
+  R3-expansion-pruned-on-empty-initial-feed (rotation loses expanded groups). Fixed: a8f03cd (typed single
+  char never drops digits; paste = growth > 1 char), 45c4168 (no reconcile while feed not loaded). RED (4) →
+  GREEN; test + assembleDebug green. Emulator: COP "1,234" + "." mid-number → "1,234"; "." then "5" → "12,345";
+  expanded group survives portrait → landscape → portrait.
+  Items:
+  a) COP paste "1234.56" must not inflate to 123456; b) USD/EUR paste "1,234.56" must become 1234.56;
+  c) "12." gives a hint instead of silently disabling submit; d) formatCompactMoney 999,999 → "$1 M";
+  e) Week "Ahorro" value tinted green (red if negative); f) prune feed expansion keys not in the feed;
+  g) group key survives deleting its oldest movement; h) GroupedBubble category summary boundary at 3;
+  i) metrics rapid ‹ taps can't pass the earliest period; j) income-source tiebreak by name;
+  k) income bar ignores zero-weight segments; l) float asserts with delta; m) remove unused barFraction;
+  n) test that Day skips the category query.
+
 ## Acceptance
 - `./gradlew test` and `./gradlew assembleDebug` green after each task.
 - Each task matches its artboard on the canvas.
@@ -112,6 +136,5 @@ HistoryCardsYear, HistoryCardsMonth. History A/B/C artboards are NOT the chosen 
   - Note: history net amounts show no "+" sign (design had "+$640.000"); user confirmed it's fine as is.
 
 ## Next step
-All tasks done and emulator-verified (2026-11-12). Branch not pushed. Pending user decision:
-advisory follow-ups (paste handling in AmountInput, feed expansion keys, compact money boundary, etc.)
-and delivery (push + PR; branch ~5k changed lines incl. tests → chained-PR strategy question).
+All tasks (T0a-T5 + fixes) done and emulator-verified (2026-11-12). Last slice c17a671..45c4168
+(79 lines) under budget, not reviewed. Branch not pushed. Pending user decision: delivery (push + PR; branch ~5k changed lines incl. tests → chained-PR strategy question).
