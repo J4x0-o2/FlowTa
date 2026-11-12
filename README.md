@@ -23,10 +23,15 @@ Si tienes instalada una versión firmada con otro certificado, Android no deja a
 ## Qué hace
 
 - **Registro en burbujas.** Ingresos, gastos y transferencias entre cuentas desde una sola hoja con tres pestañas. Cada movimiento tiene categoría, nota opcional y, en los ingresos, una fuente.
+- **Burbujas agrupadas.** Dos o más movimientos seguidos del mismo tipo se juntan en una sola burbuja con la cantidad (×N), el total, las categorías y el rango de fechas. Al tocarla se despliega y muestra cada movimiento.
 - **Cuentas y metas de ahorro.** Efectivo, cuenta bancaria, billetera digital, ahorros u otra. Las cuentas de ahorros pueden tener una meta con barra de progreso. El saldo se actualiza con cada movimiento.
-- **Métricas.** Ingresos, gastos, transferencias y flujo neto por semana, mes o todo el tiempo, con gráfico de barras por día y gráfico de gastos por categoría.
-- **Historial por semana, mes y año.** Neto anual, desglose por mes y, al abrir un mes, desglose por semana (lunes a domingo). Los límites se calculan con la fecha local del dispositivo.
-- **Montos según la moneda.** En COP, `5.000` y `5,000` significan cinco mil; las entradas ambiguas se rechazan en lugar de interpretarse a ciegas.
+- **Métricas por día, semana, mes y año.** Períodos de calendario con flechas para ir hacia atrás:
+  - *Día:* el neto del día.
+  - *Semana:* neto con la variación frente a la semana anterior, ingresos y gastos, barras por día (al tocar un día se ve su ingreso y su gasto), gastos por categoría, promedio diario, día más caro y porcentaje de ahorro.
+  - *Mes y año:* neto, anillo de ahorro, gráfico de gastos por categoría e ingresos por fuente.
+  - Cada categoría conserva el mismo color en todas las vistas.
+- **Historial por semana, mes y año.** Neto anual, desglose por mes y, al abrir un mes, desglose por semana (lunes a domingo). Cada tarjeta muestra ingresos, gastos y una barra con qué parte de lo ganado se gastó; si se gastó más de lo ganado, la barra se pone roja y dice por cuánto. Los límites se calculan con la fecha local del dispositivo.
+- **Montos según la moneda.** El separador de miles aparece dentro del campo mientras escribes (`373929` → `373,929`). En COP, `5.000` y `5,000` significan cinco mil; al pegar un monto con decimales en COP se descartan los decimales, y en USD/EUR se reconocen formatos como `1,234.56` y `1.234,56`.
 - **Reiniciar una cuenta.** Borra los movimientos de una cuenta y la deja con el saldo inicial que indiques.
 - **Borrar todos los datos.** Desde Ajustes, con confirmación escribiendo `BORRAR`; la app queda como recién instalada.
 - **Ajustes.** Tema claro u oscuro y moneda COP, USD o EUR.
@@ -97,7 +102,9 @@ app/src/main/java/com/j4x/flowta/
 - Los casos de uso exponen un único método público (`operator fun invoke`).
 - Los repositorios son interfaces de dominio con implementación en `data`; los mappers convierten filas de SQLDelight a modelos de dominio.
 - Las hojas modales (`ModalBottomSheet`) son estado local de cada pantalla, no rutas de navegación.
-- El historial agrupa por fecha local en Kotlin (`HistoryAggregator`, dominio puro) y no en SQL.
+- El historial y las métricas agrupan por fecha local en Kotlin (`HistoryAggregator`, `MetricsAggregator` y `MetricsPeriod`, dominio puro) y no en SQL.
+- La agrupación de burbujas del inicio es una función pura (`groupFeed`) separada de la pantalla.
+- Los colores de categorías se asignan por el orden de creación de las categorías, no por hash, para que nunca se repitan entre categorías (hasta 12) y sean estables entre pantallas.
 
 ## Compilar y ejecutar
 
