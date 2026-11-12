@@ -6,7 +6,6 @@ import app.cash.sqldelight.coroutines.mapToOneOrNull
 import com.j4x.flowta.database.InternalTransferQueries
 import com.j4x.flowta.database.TransactionQueries
 import com.j4x.flowta.feature.metrics.domain.model.CategoryExpense
-import com.j4x.flowta.feature.metrics.domain.model.DailyFlow
 import com.j4x.flowta.feature.metrics.domain.model.DateRange
 import com.j4x.flowta.feature.metrics.domain.repository.MetricsRepository
 import kotlinx.coroutines.Dispatchers
@@ -26,13 +25,6 @@ class MetricsRepositoryImpl @Inject constructor(
                 list.map { row ->
                     CategoryExpense(row.type_id, row.type_name, row.category, row.total)
                 }
-            }
-
-    override fun getIncomeVsExpenseByDay(range: DateRange): Flow<List<DailyFlow>> =
-        queries.incomeVsExpenseByDay(range.from, range.to)
-            .asFlow().mapToList(Dispatchers.IO)
-            .map { list ->
-                list.map { row -> DailyFlow(row.flow_type, row.total, row.day_bucket) }
             }
 
     override fun getNetBalance(): Flow<Double> =

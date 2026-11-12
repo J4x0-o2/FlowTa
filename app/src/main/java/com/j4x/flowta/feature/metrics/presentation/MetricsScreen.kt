@@ -1,6 +1,6 @@
 package com.j4x.flowta.feature.metrics.presentation
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,10 +18,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.CallMade
-import androidx.compose.material.icons.automirrored.filled.CallReceived
-import androidx.compose.material.icons.filled.SwapHoriz
-import androidx.compose.material.icons.automirrored.filled.TrendingDown
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,31 +34,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.background
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.j4x.flowta.core.presentation.theme.Indigo500
-import com.j4x.flowta.core.domain.model.CurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencyCode
 import com.j4x.flowta.core.presentation.LocalCurrencySymbol
+import com.j4x.flowta.core.presentation.theme.Indigo500
+import com.j4x.flowta.core.presentation.theme.categoryColor
 import com.j4x.flowta.core.presentation.theme.flowColors
 import com.j4x.flowta.feature.metrics.domain.model.CategoryExpense
-import com.j4x.flowta.feature.metrics.domain.model.DailyFlow
-import androidx.compose.foundation.Canvas
-import androidx.compose.ui.graphics.drawscope.Fill
-import com.j4x.flowta.core.presentation.format.Formatters
-
-private val chartPalette = listOf(
-    Color(0xFFE74C3C), Color(0xFF3498DB), Color(0xFF3A9564),
-    Color(0xFFF39C12), Color(0xFF9B59B6), Color(0xFF1ABC9C),
-    Color(0xFFE67E22), Color(0xFF34495E), Color(0xFF95A5A6)
-)
+import com.j4x.flowta.feature.metrics.domain.model.MetricsPeriodType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -87,102 +76,39 @@ fun MetricsScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Tabs Semana / Mes / Todo
             item {
-                RangeTabs(
-                    selected = state.selectedRange,
-                    onSelect = { viewModel.onIntent(MetricsIntent.SelectRange(it)) }
+                PeriodTabs(
+                    selected = state.periodType,
+                    onSelect = { viewModel.onIntent(MetricsIntent.SelectType(it)) }
                 )
             }
 
-            // Tarjetas resumen 2×2
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        SummaryCard(
-                            label  = "Ingresos",
-                            amount = state.totalIncome,
-                            color  = flowColors.incomeText,
-                            icon   = Icons.AutoMirrored.Filled.CallReceived,
-                            modifier = Modifier.weight(1f)
-                        )
-                        SummaryCard(
-                            label  = "Gastos",
-                            amount = state.totalExpense,
-                            color  = flowColors.expenseText,
-                            icon   = Icons.AutoMirrored.Filled.CallMade,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        SummaryCard(
-                            label  = "Transferencias",
-                            amount = state.totalTransfers,
-                            color  = Indigo500,
-                            icon   = Icons.Default.SwapHoriz,
-                            modifier = Modifier.weight(1f)
-                        )
-                        SummaryCard(
-                            label  = "Flujo neto",
-                            amount = state.netFlow,
-                            color  = when {
-                                state.netFlow > 0 -> flowColors.incomeText
-                                state.netFlow < 0 -> flowColors.expenseText
-                                else              -> MaterialTheme.colorScheme.onSurface
-                            },
-                            icon   = Icons.AutoMirrored.Filled.TrendingDown,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
+            val period = state.period
+            val today = state.today
+            val metrics = state.metrics
+            if (period != null && today != null) {
+                item {
+                    PeriodStepper(
+                        title = periodTitle(period, today),
+                        subtitle = periodSubtitle(period, today),
+                        canGoBack = state.canGoBack,
+                        canGoForward = state.canGoForward,
+                        onPrevious = { viewModel.onIntent(MetricsIntent.Previous) },
+                        onNext = { viewModel.onIntent(MetricsIntent.Next) }
+                    )
                 }
             }
-
-            // Gráfico Ingresos vs Gastos
-            item {
-                MetricsCard(title = "Ingresos vs Gastos") {
-                    IncomeExpenseBarChart(dailyFlows = state.dailyFlows)
-                }
-            }
-
-            // Gráfico Gastos por categoría
-            item {
-                MetricsCard(title = "Gastos por categoría") {
-                    ExpensesDonutChart(categories = state.expensesByCategory)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun RangeTabs(
-    selected: DateRangeOption,
-    onSelect: (DateRangeOption) -> Unit
-) {
-    Surface(
-        shape = RoundedCornerShape(50),
-        color = MaterialTheme.colorScheme.surfaceVariant
-    ) {
-        Row(modifier = Modifier.padding(4.dp)) {
-            DateRangeOption.entries.forEach { option ->
-                val isActive = option == selected
-                Surface(
-                    onClick = { onSelect(option) },
-                    shape = RoundedCornerShape(50),
-                    color = if (isActive) Indigo500 else Color.Transparent
-                ) {
-                    Text(
-                        text  = option.label,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = if (isActive) Color.White
-                                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
+            if (metrics != null) {
+                when (state.periodType) {
+                    // Month and Year only show their net until their dedicated views land.
+                    MetricsPeriodType.DAY,
+                    MetricsPeriodType.MONTH,
+                    MetricsPeriodType.YEAR -> item { NetCard(state.periodType.netLabel(), metrics.net) }
+                    MetricsPeriodType.WEEK -> weekMetricsItems(
+                        metrics = metrics,
+                        isCurrentWeek = period != null && today != null && period.isCurrent(today),
+                        selectedDay = state.selectedDay,
+                        onSelectDay = { viewModel.onIntent(MetricsIntent.SelectDay(it)) }
                     )
                 }
             }
@@ -191,48 +117,98 @@ private fun RangeTabs(
 }
 
 @Composable
-private fun SummaryCard(
-    label: String,
-    amount: Double,
-    color: Color,
-    icon: ImageVector,
-    modifier: Modifier = Modifier
+private fun PeriodTabs(
+    selected: MetricsPeriodType,
+    onSelect: (MetricsPeriodType) -> Unit
 ) {
-    val symbol = LocalCurrencySymbol.current
-    val code   = LocalCurrencyCode.current
     Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(50),
         color = MaterialTheme.colorScheme.surfaceVariant
     ) {
-        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(color.copy(alpha = 0.15f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(18.dp))
+        Row(modifier = Modifier.padding(4.dp)) {
+            MetricsPeriodType.entries.forEach { type ->
+                val isActive = type == selected
+                Surface(
+                    onClick = { onSelect(type) },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(50),
+                    color = if (isActive) Indigo500 else Color.Transparent
+                ) {
+                    Text(
+                        text = type.tabLabel(),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = if (isActive) Color.White
+                                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
             }
-            Text(
-                label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
-            )
-            Text(
-                text       = amount.toDisplayAmount(symbol, code),
-                style      = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color      = color
-            )
         }
     }
 }
 
 @Composable
-private fun MetricsCard(title: String, content: @Composable () -> Unit) {
+private fun PeriodStepper(
+    title: String,
+    subtitle: String,
+    canGoBack: Boolean,
+    canGoForward: Boolean,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = onPrevious, enabled = canGoBack) {
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Período anterior")
+        }
+        Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+        }
+        IconButton(onClick = onNext, enabled = canGoForward) {
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Período siguiente")
+        }
+    }
+}
+
+/** The net of a period with its sign: green when positive, red when negative, neutral at zero. */
+@Composable
+internal fun NetCard(label: String, net: Double) {
+    val symbol = LocalCurrencySymbol.current
+    val code = LocalCurrencyCode.current
+    MetricsCard(title = label) {
+        Text(
+            text = formatNet(net, symbol, code),
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            color = netColor(net)
+        )
+    }
+}
+
+@Composable
+internal fun netColor(net: Double): Color = when {
+    net > 0 -> flowColors.incomeText
+    net < 0 -> flowColors.expenseText
+    else -> MaterialTheme.colorScheme.onSurface
+}
+
+@Composable
+internal fun MetricsCard(
+    title: String,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
     Surface(
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surfaceVariant
     ) {
@@ -246,74 +222,9 @@ private fun MetricsCard(title: String, content: @Composable () -> Unit) {
     }
 }
 
+/** Donut of expenses by category, colored by [categoryColor]. Kept for the Month and Year views. */
 @Composable
-private fun IncomeExpenseBarChart(dailyFlows: List<DailyFlow>) {
-    if (dailyFlows.isEmpty()) {
-        Box(
-            modifier = Modifier.fillMaxWidth().height(100.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                "Sin datos en este período",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-            )
-        }
-        return
-    }
-
-    val chart    = remember(dailyFlows) { computeBarChartData(dailyFlows) }
-    val days     = chart.days
-    val maxValue = chart.maxValue
-
-    val incomeFill  = flowColors.incomeFill
-    val expenseFill = flowColors.expenseFill
-
-    Canvas(modifier = Modifier.fillMaxWidth().height(120.dp)) {
-        val groupW  = size.width / days.size
-        val barW    = (groupW * 0.32f).coerceAtLeast(4f)
-        val gap     = 2f
-
-        days.forEachIndexed { i, day ->
-            val income  = day.income
-            val expense = day.expense
-            val cx      = (i + 0.5f) * groupW
-
-            if (income > 0) {
-                val h = income / maxValue * size.height
-                drawRect(
-                    color    = incomeFill,
-                    topLeft  = Offset(cx - barW - gap, size.height - h),
-                    size     = Size(barW, h),
-                    style    = Fill
-                )
-            }
-            if (expense > 0) {
-                val h = expense / maxValue * size.height
-                drawRect(
-                    color    = expenseFill,
-                    topLeft  = Offset(cx + gap, size.height - h),
-                    size     = Size(barW, h),
-                    style    = Fill
-                )
-            }
-        }
-    }
-
-    // Leyenda
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        LegendDot(color = flowColors.incomeFill, label = "Ingresos")
-        Spacer(Modifier.width(16.dp))
-        LegendDot(color = flowColors.expenseFill, label = "Gastos")
-    }
-}
-
-@Composable
-private fun ExpensesDonutChart(categories: List<CategoryExpense>) {
+internal fun ExpensesDonutChart(categories: List<CategoryExpense>) {
     val donut   = remember(categories) { computeDonutData(categories) }
     val nonZero = donut.slices
     val total   = donut.total
@@ -340,10 +251,10 @@ private fun ExpensesDonutChart(categories: List<CategoryExpense>) {
     ) {
         Canvas(modifier = Modifier.size(140.dp)) {
             var startAngle = -90f
-            nonZero.forEachIndexed { i, cat ->
+            nonZero.forEach { cat ->
                 val sweep = (cat.total / total * 360f).toFloat()
                 drawArc(
-                    color      = chartPalette[i % chartPalette.size],
+                    color      = categoryColor(cat.typeId),
                     startAngle = startAngle,
                     sweepAngle = sweep,
                     useCenter  = true,
@@ -360,29 +271,16 @@ private fun ExpensesDonutChart(categories: List<CategoryExpense>) {
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            nonZero.take(7).forEachIndexed { i, cat ->
+            nonZero.take(7).forEach { cat ->
                 val pct = (cat.total / total * 100).toInt()
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(CircleShape)
-                            .background(chartPalette[i % chartPalette.size])
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Text(
-                        "${cat.typeName} $pct%",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                    )
-                }
+                LegendDot(color = categoryColor(cat.typeId), label = "${cat.typeName} $pct%")
             }
         }
     }
 }
 
 @Composable
-private fun LegendDot(color: Color, label: String) {
+internal fun LegendDot(color: Color, label: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
             modifier = Modifier
@@ -397,11 +295,4 @@ private fun LegendDot(color: Color, label: String) {
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
         )
     }
-}
-
-private fun Double.toDisplayAmount(symbol: String, code: CurrencyCode): String {
-    val sign = if (this < 0) "-" else ""
-    val abs  = kotlin.math.abs(this)
-    val num = Formatters.amount(abs, code)
-    return "$sign$symbol$num"
 }
