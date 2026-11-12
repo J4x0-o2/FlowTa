@@ -22,6 +22,9 @@ class ObserveMetricsUseCase @Inject constructor(
     private val history: HistoryRepository,
     private val metrics: MetricsRepository
 ) {
+    /** Millis of the oldest movement (null when there is none); lets callers bound period navigation. */
+    fun earliest(): Flow<Long?> = history.observeEarliest()
+
     operator fun invoke(
         period: MetricsPeriod,
         zone: ZoneId = ZoneId.systemDefault(),

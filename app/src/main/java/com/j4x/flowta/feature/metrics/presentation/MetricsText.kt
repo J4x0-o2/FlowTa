@@ -1,5 +1,6 @@
 package com.j4x.flowta.feature.metrics.presentation
 
+import com.j4x.flowta.feature.metrics.domain.model.IncomeSourceShare
 import com.j4x.flowta.core.domain.model.CurrencyCode
 import com.j4x.flowta.feature.history.presentation.formatMoney
 import com.j4x.flowta.feature.history.presentation.monthName
@@ -111,13 +112,28 @@ internal fun PercentChange.arrowText(): String = when {
 /** Short amount for tight spots: "$950", "$450 mil", "$12,5 mil", "$1,18 M". */
 internal fun formatCompactMoney(value: Double, symbol: String, code: CurrencyCode): String {
     val magnitude = abs(value)
+    val thousands = trimmed(magnitude / 1_000, 1)
     val text = when {
-        magnitude >= 1_000_000 -> "${trimmed(magnitude / 1_000_000, 2)} M"
-        magnitude >= 10_000 -> "${trimmed(magnitude / 1_000, 1)} mil"
-        else -> return formatMoney(value, symbol, code)
+        magnitude < 10_000 -> return formatMoney(value, symbol, code)
+        // 999.999 would print as "1000 mil": promote to the next unit once it rounds to 1000.
+        magnitude >= 1_000_000 || thousands.replace(",", ".").toDouble() >= 1_000 ->
+            "${trimmed(magnitude / 1_000_000, 2)} M"
+        else -> "$thousands mil"
     }
     return (if (value < 0) "-" else "") + symbol + text
 }
+
+/** Tint of the savings figure: green above zero, red below, neutral for 0 or no data. */
+internal enum class SavingsTone { POSITIVE, NEGATIVE, NEUTRAL }
+
+internal fun savingsTone(percent: Int?): SavingsTone = when {
+    percent == null || percent == 0 -> SavingsTone.NEUTRAL
+    percent > 0 -> SavingsTone.POSITIVE
+    else -> SavingsTone.NEGATIVE
+}
+
+/** Segments of the stacked income bar: sources without income would need a zero weight, which Compose rejects. */
+internal fun List<IncomeSourceShare>.barSegments(): List<IncomeSourceShare> = filter { it.total > 0.0 }
 
 /** Up to [decimals] decimals without trailing zeros, with a decimal comma. */
 private fun trimmed(value: Double, decimals: Int): String =

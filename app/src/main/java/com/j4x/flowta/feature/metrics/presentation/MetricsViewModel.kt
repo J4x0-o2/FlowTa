@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
+import java.time.Instant
 import java.time.LocalDate
 import javax.inject.Inject
 
@@ -29,13 +30,15 @@ import javax.inject.Inject
 @HiltViewModel
 class MetricsViewModel @Inject constructor(
     private val savedState: SavedStateHandle,
-    observeMetrics: ObserveMetricsUseCase,
+    private val observeMetrics: ObserveMetricsUseCase,
     observeColorOrder: ObserveColorOrderUseCase,
-    ticker: DayTicker
+    private val ticker: DayTicker
 ) : ViewModel() {
 
     private val selectedType = savedState.getStateFlow(KEY_TYPE, DEFAULT_TYPE.name)
     private val periodsBack = savedState.getStateFlow(KEY_OFFSET, 0)
+    private val earliest: StateFlow<Long?> =
+        observeMetrics.earliest().stateIn(viewModelScope, SharingStarted.Eagerly, null)
     private val pickedDay = MutableStateFlow<LocalDate?>(null)
 
     /** Re-subscribes on every local day change so "today" never goes stale while the screen stays open. */
@@ -61,22 +64,35 @@ class MetricsViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), MetricsState())
 
     fun onIntent(intent: MetricsIntent) {
-        val shown = state.value
         when (intent) {
             is MetricsIntent.SelectType -> {
                 pickedDay.value = null
                 savedState[KEY_OFFSET] = 0
                 savedState[KEY_TYPE] = intent.type.name
             }
-            MetricsIntent.Previous -> if (shown.canGoBack) move(+1)
-            MetricsIntent.Next -> if (shown.canGoForward) move(-1)
-            is MetricsIntent.SelectDay -> if (shown.period?.contains(intent.date) == true) pickedDay.value = intent.date
+            MetricsIntent.Previous -> if (hasPeriodBefore()) move(+1)
+            MetricsIntent.Next -> if (currentOffset() > 0) move(-1)
+            is MetricsIntent.SelectDay ->
+                if (state.value.period?.contains(intent.date) == true) pickedDay.value = intent.date
         }
+    }
+
+    private fun currentOffset() = savedState.get<Int>(KEY_OFFSET) ?: 0
+
+    /**
+     * Computed from the saved offset and the earliest movement (not from the last emitted UI state),
+     * so rapid taps can never step past the oldest period.
+     */
+    private fun hasPeriodBefore(): Boolean {
+        val oldest = earliest.value ?: return false
+        val type = parseType(savedState.get<String>(KEY_TYPE) ?: DEFAULT_TYPE.name)
+        val shown = MetricsPeriod.containing(type, ticker.today()).shift(-currentOffset())
+        return Instant.ofEpochMilli(oldest).atZone(ticker.zone).toLocalDate() < shown.start
     }
 
     private fun move(delta: Int) {
         pickedDay.value = null
-        savedState[KEY_OFFSET] = ((savedState.get<Int>(KEY_OFFSET) ?: 0) + delta).coerceAtLeast(0)
+        savedState[KEY_OFFSET] = (currentOffset() + delta).coerceAtLeast(0)
     }
 
     private fun parseType(name: String): MetricsPeriodType =

@@ -366,4 +366,52 @@ class MetricsViewModelTest {
             cancelAndIgnoreRemainingEvents()
         }
     }
+
+    @Test
+    fun rapidPreviousTaps_neverPassTheEarliestPeriod_evenWithoutAnEmittedState() = runTest {
+        earliest.value = millis("2026-11-09T08:00:00") // two days before today (Wednesday 11th)
+        val handle = SavedStateHandle()
+        val vm = viewModel(handle = handle)
+
+        repeat(6) { vm.onIntent(MetricsIntent.Previous) }
+
+        assertEquals(2, handle.get<Int>("offset"))
+    }
+
+    @Test
+    fun previous_doesNothingWithoutAnyMovement() = runTest {
+        val handle = SavedStateHandle()
+        val vm = viewModel(handle = handle)
+
+        vm.onIntent(MetricsIntent.Previous)
+
+        assertEquals(0, handle.get<Int>("offset"))
+    }
+
+    @Test
+    fun rapidNextTaps_neverGoBelowTheCurrentPeriod() = runTest {
+        earliest.value = millis("2026-01-01T08:00:00")
+        val handle = SavedStateHandle(mapOf("offset" to 2))
+        val vm = viewModel(handle = handle)
+
+        repeat(6) { vm.onIntent(MetricsIntent.Next) }
+
+        assertEquals(0, handle.get<Int>("offset"))
+    }
+
+    @Test
+    fun dayPeriod_doesNotQueryCategoriesButStillWorks() = runTest {
+        categories.value = listOf(CategoryExpense("food", "Comida", "EXPENSE", 30.0))
+        movements.value = listOf(HistoryMovement("EXPENSE", 30.0, millis("2026-11-11T10:00:00")))
+        val vm = viewModel()
+
+        vm.state.test {
+            val state = expectMostRecentItem()
+            assertEquals(MetricsPeriodType.DAY, state.periodType)
+            assertEquals(-30.0, state.metrics!!.net, 0.0)
+            assertTrue(state.metrics!!.categories.isEmpty())
+            assertTrue(requestedCategoryRanges.isEmpty())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
 }
