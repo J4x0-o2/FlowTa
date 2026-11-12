@@ -136,4 +136,36 @@ class FeedGroupingTest {
         val grouped = groupFeed(listOf(expense("e2", 1.0, "A", 200), expense("e1", 1.0, "A", 100)))[0]
         assertTrue(only.key != grouped.key)
     }
+
+    // --- reconcileExpansion ---
+
+    private fun groupOf(vararg ids: String) =
+        groupFeed(ids.mapIndexed { i, id -> expense(id, 1.0, "A", 1000L - i) }).single()
+
+    @Test
+    fun reconcile_keepsKeysThatStillExist() {
+        val g = groupOf("e3", "e2", "e1")
+        assertEquals(listOf(g.key), reconcileExpansion(listOf(g.key), listOf(g), listOf(g)))
+    }
+
+    @Test
+    fun reconcile_dropsKeysWhoseGroupVanished() {
+        val g = groupOf("e3", "e2")
+        assertEquals(emptyList<String>(), reconcileExpansion(listOf(g.key), listOf(g), emptyList()))
+    }
+
+    @Test
+    fun reconcile_followsGroupWhenOldestMovementIsDeleted() {
+        val before = groupOf("e3", "e2", "e1")
+        val after = groupOf("e3", "e2")
+        assertTrue(before.key != after.key)
+        assertEquals(listOf(after.key), reconcileExpansion(listOf(before.key), listOf(before), listOf(after)))
+    }
+
+    @Test
+    fun reconcile_doesNotExpandUnrelatedGroups() {
+        val before = groupOf("e3", "e2")
+        val other = groupOf("x2", "x1")
+        assertEquals(emptyList<String>(), reconcileExpansion(listOf(before.key), listOf(before), listOf(other)))
+    }
 }
