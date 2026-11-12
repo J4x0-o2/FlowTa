@@ -219,7 +219,6 @@ private fun ResetAccountDialogContent(
                     value         = amountText,
                     onValueChange = { amountText = it },
                     label         = "Saldo inicial",
-                    previewLabel  = "Saldo",
                     modifier      = Modifier.fillMaxWidth()
                 )
             }
