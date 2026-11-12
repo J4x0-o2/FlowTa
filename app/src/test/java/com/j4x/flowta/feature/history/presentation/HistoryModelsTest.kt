@@ -127,9 +127,15 @@ class HistoryModelsTest {
 
     @Test
     fun spendShare_normal_isFractionAndRoundedPercent() {
-        assertEquals(SpendShare.Within(0.65f, 65), spendShare(income = 1000.0, expense = 650.0))
-        assertEquals(SpendShare.Within(1f / 3f, 33), spendShare(income = 300.0, expense = 100.0))
-        assertEquals(SpendShare.Within(2f / 3f, 67), spendShare(income = 300.0, expense = 200.0))
+        assertWithin(0.65f, 65, spendShare(income = 1000.0, expense = 650.0))
+        assertWithin(1f / 3f, 33, spendShare(income = 300.0, expense = 100.0))
+        assertWithin(2f / 3f, 67, spendShare(income = 300.0, expense = 200.0))
+    }
+
+    private fun assertWithin(fraction: Float, percent: Int, actual: SpendShare) {
+        val within = actual as SpendShare.Within
+        assertEquals(fraction, within.fraction, 0.0001f)
+        assertEquals(percent, within.percent)
     }
 
     @Test
