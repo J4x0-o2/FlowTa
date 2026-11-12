@@ -145,4 +145,6 @@ All tasks (T0a-T5 + fixes) done and emulator-verified (2026-11-12). Last slice c
 - README updated (45c9443). Release APK built and signed with the MiCuadre key (CN=MiCuadre), copied to
   Desktop as FlowTa-1.1.0-ui-v2-release.apk (version not bumped). Release (R8) smoke test on Pixel_6 after
   uninstalling debug: create account, 2 expenses (grouped ×2), 1 income, Día/Semana/Mes/Año, Historial: no crashes.
-
+- Version bumped to 1.2.0 (versionCode 3) with README "Novedades en 1.2.0" (d97d861). Release APK on Desktop as
+  FlowTa-1.2.0.apk (same MiCuadre cert). Emulator: installed over the 1.1.0 release → versionName 1.2.0, data kept
+  (balance $613,000, grouped bubble), no crashes.
