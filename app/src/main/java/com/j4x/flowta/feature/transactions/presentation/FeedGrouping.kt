@@ -73,12 +73,17 @@ fun groupFeed(items: List<FeedItem>): List<FeedEntry> {
  * Carries expanded group keys over a feed change. A key that still exists is kept; a key whose
  * group disappeared (e.g. its oldest movement was deleted, which changes the key) moves to the
  * current group that shares any movement with the previous one; otherwise it is dropped.
+ *
+ * While nothing has loaded yet (both [previous] and [current] are empty) the keys are kept as is,
+ * so expansion restored after a configuration change or process death survives the feed's
+ * initial empty emission. A feed that becomes empty after having data still prunes to empty.
  */
 fun reconcileExpansion(
     expanded: List<String>,
     previous: List<FeedEntry>,
     current: List<FeedEntry>
 ): List<String> {
+    if (previous.isEmpty() && current.isEmpty()) return expanded
     val currentGroups = current.filterIsInstance<FeedEntry.Group>()
     val currentKeys = currentGroups.map { it.key }.toSet()
     val previousByKey = previous.filterIsInstance<FeedEntry.Group>().associateBy { it.key }

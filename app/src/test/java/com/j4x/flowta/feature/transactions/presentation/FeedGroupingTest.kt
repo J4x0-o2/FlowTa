@@ -168,4 +168,19 @@ class FeedGroupingTest {
         val other = groupOf("x2", "x1")
         assertEquals(emptyList<String>(), reconcileExpansion(listOf(before.key), listOf(before), listOf(other)))
     }
+
+    @Test
+    fun reconcile_keepsRestoredKeysWhileFeedHasNotLoaded() {
+        assertEquals(listOf("k1"), reconcileExpansion(listOf("k1"), emptyList(), emptyList()))
+    }
+
+    @Test
+    fun reconcile_prunesStaleRestoredKeysOnceRealDataArrives() {
+        val g = groupOf("e3", "e2")
+        assertEquals(
+            listOf(g.key),
+            reconcileExpansion(listOf("stale", g.key), emptyList(), listOf(g))
+        )
+        assertEquals(emptyList<String>(), reconcileExpansion(listOf("stale"), emptyList(), listOf(g)))
+    }
 }

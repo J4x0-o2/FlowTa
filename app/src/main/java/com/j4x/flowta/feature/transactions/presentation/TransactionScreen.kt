@@ -62,7 +62,8 @@ fun TransactionScreen(
     // Expansion is UI state keyed by the group's stable key (oldest movement id).
     var expandedGroups by rememberSaveable { mutableStateOf(listOf<String>()) }
     val entries = remember(state.feed) { groupFeed(state.feed) }
-    // Prune stale keys and follow groups whose key changed (oldest movement deleted).
+    // Prune stale keys and follow groups whose key changed (oldest movement deleted). The pure
+    // reconcile keeps restored keys while the feed has not loaded (empty before and after).
     var previousEntries by remember { mutableStateOf(entries) }
     LaunchedEffect(entries) {
         expandedGroups = reconcileExpansion(expandedGroups, previousEntries, entries)
