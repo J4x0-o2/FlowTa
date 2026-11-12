@@ -360,7 +360,11 @@ private fun WeekStatsRow(metrics: PeriodMetrics) {
             title = "Ahorro",
             value = savings?.let { "$it%" } ?: "—",
             caption = "de ingresos",
-            valueColor = if (savings != null && savings < 0) flowColors.expenseText else MaterialTheme.colorScheme.onSurface,
+            valueColor = when (savingsTone(savings)) {
+                SavingsTone.POSITIVE -> flowColors.incomeText
+                SavingsTone.NEGATIVE -> flowColors.expenseText
+                SavingsTone.NEUTRAL -> MaterialTheme.colorScheme.onSurface
+            },
             modifier = Modifier.weight(1f)
         )
     }

@@ -2,6 +2,7 @@ package com.j4x.flowta.feature.metrics.presentation
 
 import com.j4x.flowta.feature.metrics.domain.model.CategoryExpense
 import com.j4x.flowta.core.domain.model.CurrencyCode
+import com.j4x.flowta.feature.metrics.domain.model.IncomeSourceShare
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -73,5 +74,36 @@ class MetricsCalculationsTest {
         assertEquals("$12,5 mil", formatCompactMoney(12_500.0, "$", CurrencyCode.COP))
         assertEquals("$1,18 M", formatCompactMoney(1_180_000.0, "$", CurrencyCode.COP))
         assertEquals("$2 M", formatCompactMoney(2_000_000.0, "$", CurrencyCode.COP))
+    }
+
+    @Test
+    fun compactMoney_promotesValuesThatRoundAcrossAUnitBoundary() {
+        assertEquals("$1 M", formatCompactMoney(999_999.0, "$", CurrencyCode.COP))
+        assertEquals("$1 M", formatCompactMoney(999_950.0, "$", CurrencyCode.COP))
+        assertEquals("$999,9 mil", formatCompactMoney(999_940.0, "$", CurrencyCode.COP))
+        assertEquals("$10 M", formatCompactMoney(9_999_999.0, "$", CurrencyCode.COP))
+        assertEquals("-$1 M", formatCompactMoney(-999_999.0, "$", CurrencyCode.COP))
+    }
+
+    // --- savings tone ---
+
+    @Test
+    fun savingsTone_isGreenWhenPositive_redWhenNegative_neutralOtherwise() {
+        assertEquals(SavingsTone.POSITIVE, savingsTone(12))
+        assertEquals(SavingsTone.NEGATIVE, savingsTone(-3))
+        assertEquals(SavingsTone.NEUTRAL, savingsTone(0))
+        assertEquals(SavingsTone.NEUTRAL, savingsTone(null))
+    }
+
+    // --- income bar segments ---
+
+    @Test
+    fun barSegments_skipZeroAndNegativeWeights() {
+        val shares = listOf(
+            IncomeSourceShare("a", "A", 300.0, 75, 1f),
+            IncomeSourceShare("b", "B", 0.0, 0, 0f),
+            IncomeSourceShare("c", "C", 100.0, 25, 0.3f)
+        )
+        assertEquals(listOf("a", "c"), shares.barSegments().map { it.id })
     }
 }

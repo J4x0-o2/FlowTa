@@ -165,7 +165,7 @@ private fun IncomeSourcesCard(metrics: PeriodMetrics, colors: MetricsColors) {
             return@MetricsCard
         }
         Row(modifier = Modifier.fillMaxWidth().height(12.dp).clip(RoundedCornerShape(6.dp))) {
-            sources.forEach { source ->
+            sources.barSegments().forEach { source ->
                 Box(
                     modifier = Modifier
                         .weight(source.total.toFloat())

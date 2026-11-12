@@ -77,4 +77,17 @@ class MetricsDataTest {
     fun incomeBySource_isEmptyWithoutIncome() = runTest {
         assertEquals(emptyList<IncomeSourceTotal>(), repository.getIncomeBySource(DateRange(0, 10)).first())
     }
+
+    @Test
+    fun incomeBySource_tiesAreOrderedByNameAscending() = runTest {
+        // Ids sort the opposite way to the names, so only an explicit tiebreak gives Alpha first.
+        db.transactionTypeQueries.insert("a_id", "Zeta", "INCOME_SOURCE", 0)
+        db.transactionTypeQueries.insert("z_id", "Alpha", "INCOME_SOURCE", 0)
+        insert("INCOME", 100.0, 1_000, "a_id")
+        insert("INCOME", 100.0, 1_100, "z_id")
+
+        val result = repository.getIncomeBySource(DateRange(0, 2_000)).first()
+
+        assertEquals(listOf("Alpha", "Zeta"), result.map { it.sourceName })
+    }
 }

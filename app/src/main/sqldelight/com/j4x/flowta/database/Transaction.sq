@@ -73,7 +73,7 @@ LEFT JOIN transaction_type st ON t.source_type_id = st.id
 WHERE t.flow_type = 'INCOME'
   AND t.created_at >= :from AND t.created_at < :to
 GROUP BY t.source_type_id
-ORDER BY total DESC;
+ORDER BY total DESC, source_name ASC;
 
 netBalance:
 SELECT COALESCE(
