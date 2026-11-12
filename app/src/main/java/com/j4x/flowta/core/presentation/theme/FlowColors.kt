@@ -12,16 +12,21 @@ data class FlowColors(
     val expenseText: Color,
     val expenseFill: Color,
     val expenseSolid: Color,
-    val onSolid: Color
+    val onSolid: Color,
+    /** Neutral orange for the share of income already spent. */
+    val spentFill: Color
 )
+
+private val SpentFillLight = Color(0xFFE08A1E)
+private val SpentFillDark = Color(0xFFFFB74D)
 
 fun flowColorsFor(dark: Boolean): FlowColors =
     if (dark) FlowColors(
         IncomeTextDark, IncomeFillDark, IncomeSolidDark,
-        ExpenseTextDark, ExpenseFillDark, ExpenseSolidDark, OnSolidDark
+        ExpenseTextDark, ExpenseFillDark, ExpenseSolidDark, OnSolidDark, SpentFillDark
     ) else FlowColors(
         IncomeTextLight, IncomeFillLight, IncomeSolidLight,
-        ExpenseTextLight, ExpenseFillLight, ExpenseSolidLight, OnSolidLight
+        ExpenseTextLight, ExpenseFillLight, ExpenseSolidLight, OnSolidLight, SpentFillLight
     )
 
 val flowColors: FlowColors

@@ -2,9 +2,7 @@ package com.j4x.flowta.feature.history.presentation
 
 import com.j4x.flowta.core.domain.model.CurrencyCode
 import com.j4x.flowta.core.presentation.format.Formatters
-import com.j4x.flowta.feature.history.domain.model.HistoryAggregator
 import com.j4x.flowta.feature.history.domain.model.MonthDetail
-import com.j4x.flowta.feature.history.domain.model.PeriodTotals
 import com.j4x.flowta.feature.history.domain.model.WeekHistory
 import com.j4x.flowta.feature.history.domain.model.YearHistory
 import java.time.LocalDate
@@ -12,6 +10,7 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 private val spanish = Locale.forLanguageTag("es")
 private val monthNameFormat = DateTimeFormatter.ofPattern("MMMM", spanish)
@@ -45,8 +44,26 @@ fun formatIncome(value: Double, symbol: String, code: CurrencyCode): String =
 fun formatExpense(value: Double, symbol: String, code: CurrencyCode): String =
     if (value == 0.0) formatMoney(0.0, symbol, code) else "−${formatMoney(value, symbol, code)}"
 
-/** The best single income or expense value among the siblings: the length every bar is scaled to. */
-private fun best(all: List<PeriodTotals>): Double = all.maxOfOrNull { maxOf(it.income, it.expense) } ?: 0.0
+/** How much of a period's income went to expenses; each period is judged on its own totals. */
+sealed interface SpendShare {
+    /** Nothing earned and nothing spent: no bar, no caption. */
+    data object None : SpendShare
+
+    /** Spent [percent] (rounded) of the income; [fraction] (0..1) is the filled part of the bar. */
+    data class Within(val fraction: Float, val percent: Int) : SpendShare
+
+    /** Spent [excess] more than the income (the whole expense when there was no income). */
+    data class Over(val excess: Double) : SpendShare
+}
+
+internal fun spendShare(income: Double, expense: Double): SpendShare = when {
+    expense > income -> SpendShare.Over(expense - income)
+    income <= 0.0 -> SpendShare.None
+    else -> {
+        val ratio = expense / income
+        SpendShare.Within(ratio.toFloat(), (ratio * 100).roundToInt())
+    }
+}
 
 data class MonthRowModel(
     val month: YearMonth,
@@ -56,8 +73,7 @@ data class MonthRowModel(
     val income: Double,
     val expense: Double,
     val net: Double,
-    val incomeFraction: Float,
-    val expenseFraction: Float
+    val spendShare: SpendShare
 )
 
 data class YearHistoryModel(
@@ -73,7 +89,6 @@ data class YearHistoryModel(
 
     companion object {
         fun from(history: YearHistory): YearHistoryModel {
-            val best = best(history.months.map { it.totals })
             return YearHistoryModel(
                 year = history.year,
                 canGoBack = history.hasPreviousYear,
@@ -89,8 +104,7 @@ data class YearHistoryModel(
                         income = it.totals.income,
                         expense = it.totals.expense,
                         net = it.totals.net,
-                        incomeFraction = HistoryAggregator.barFraction(it.totals.income, best),
-                        expenseFraction = HistoryAggregator.barFraction(it.totals.expense, best)
+                        spendShare = spendShare(it.totals.income, it.totals.expense)
                     )
                 }
             )
@@ -104,8 +118,7 @@ data class WeekRowModel(
     val income: Double,
     val expense: Double,
     val net: Double,
-    val incomeFraction: Float,
-    val expenseFraction: Float
+    val spendShare: SpendShare
 )
 
 data class MonthHistoryModel(
@@ -116,12 +129,12 @@ data class MonthHistoryModel(
     val expense: Double,
     val net: Double,
     val count: Int,
+    val spendShare: SpendShare,
     /** Newest week first. */
     val weeks: List<WeekRowModel>
 ) {
     companion object {
         fun from(detail: MonthDetail): MonthHistoryModel {
-            val best = best(detail.weeks.map { it.totals })
             return MonthHistoryModel(
                 month = detail.month,
                 title = monthName(detail.month),
@@ -130,18 +143,18 @@ data class MonthHistoryModel(
                 expense = detail.totals.expense,
                 net = detail.totals.net,
                 count = detail.totals.count,
-                weeks = detail.weeks.map { row(it, best) }.asReversed()
+                spendShare = spendShare(detail.totals.income, detail.totals.expense),
+                weeks = detail.weeks.map { row(it) }.asReversed()
             )
         }
 
-        private fun row(week: WeekHistory, best: Double) = WeekRowModel(
+        private fun row(week: WeekHistory) = WeekRowModel(
             rangeText = weekRangeText(week.startDate, week.endDate),
             isCurrent = week.isCurrent,
             income = week.totals.income,
             expense = week.totals.expense,
             net = week.totals.net,
-            incomeFraction = HistoryAggregator.barFraction(week.totals.income, best),
-            expenseFraction = HistoryAggregator.barFraction(week.totals.expense, best)
+            spendShare = spendShare(week.totals.income, week.totals.expense)
         )
     }
 }
