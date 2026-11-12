@@ -36,6 +36,18 @@ class FormattersTest {
     }
 
     @Test
+    fun bubbleRange_sameDayShowsDateOnceWithTimeRange() {
+        // 14:55Z -> 17:40Z same day
+        assertEquals("29 may · 2:55 PM – 5:40 PM", Formatters.bubbleRange(sample, sample + 165 * 60_000L, utc))
+    }
+
+    @Test
+    fun bubbleRange_spanningDaysShowsBothDates() {
+        val next = sample + 18 * 3_600_000L // 2026-05-30T08:55Z
+        assertEquals("29 may 2:55 PM – 30 may 8:55 AM", Formatters.bubbleRange(sample, next, utc))
+    }
+
+    @Test
     fun detailDate_matchesExpectedShape() {
         assertEquals("viernes 29 de mayo, 2026 · 2:55 PM", Formatters.detailDate(sample, utc))
     }

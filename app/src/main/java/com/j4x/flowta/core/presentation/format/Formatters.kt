@@ -37,6 +37,21 @@ object Formatters {
         return "${dayMonthFormatter.format(at)} · ${timeFormatter.format(at)}"
     }
 
+    /**
+     * Time span of a grouped bubble. Same day: "29 may · 9:15 AM – 5:40 PM";
+     * spanning days: "29 may 9:15 AM – 30 may 8:00 AM".
+     */
+    fun bubbleRange(fromMillis: Long, toMillis: Long, zone: ZoneId = ZoneId.systemDefault()): String {
+        val from = Instant.ofEpochMilli(fromMillis).atZone(zone)
+        val to   = Instant.ofEpochMilli(toMillis).atZone(zone)
+        return if (from.toLocalDate() == to.toLocalDate()) {
+            "${dayMonthFormatter.format(from)} · ${timeFormatter.format(from)} – ${timeFormatter.format(to)}"
+        } else {
+            "${dayMonthFormatter.format(from)} ${timeFormatter.format(from)} – " +
+                "${dayMonthFormatter.format(to)} ${timeFormatter.format(to)}"
+        }
+    }
+
     /** e.g. "viernes 29 de mayo, 2026 · 2:55 PM" */
     fun detailDate(epochMillis: Long, zone: ZoneId = ZoneId.systemDefault()): String {
         val at = Instant.ofEpochMilli(epochMillis).atZone(zone)
